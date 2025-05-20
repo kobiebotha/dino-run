@@ -116,19 +116,19 @@ function update() {
     
     // Reset positions when elements go off-screen
     if (ground.x <= -gameWidth) {
-      ground.x = gameWidth;
+      ground.x = groundClone.x + gameWidth;
     }
     
     if (groundClone.x <= -gameWidth) {
-      groundClone.x = gameWidth;
+      groundClone.x = ground.x + gameWidth;
     }
     
     if (sky.x <= -gameWidth) {
-      sky.x = gameWidth;
+      sky.x = skyClone.x + gameWidth;
     }
     
     if (skyClone.x <= -gameWidth) {
-      skyClone.x = gameWidth;
+      skyClone.x = sky.x + gameWidth;
     }
   }
 }
