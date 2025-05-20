@@ -12,7 +12,7 @@ let gameState = 'READY'; // 'READY' or 'PLAYING'
 
 // Animation variables
 let animationTimer = 0;
-const animationInterval = 30; // Switch legs every 30 frames (approx 0.5s at 60fps)
+const animationInterval = 15; // Switch legs every 15 frames (approx 0.5s at 60fps)
 let dinoSpriteIndex = 0;
 
 // Load game assets
