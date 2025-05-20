@@ -33,7 +33,7 @@ const sky = {
 
 const dino = {
   x: 40, // Doubled from 20px to 40px from left border
-  y: gameHeight - 272, // Increased by 20px to 272px above bottom border
+  y: gameHeight - 287, // Increased by another 15px to 287px above bottom border
   width: 88, // Will adjust based on image aspect ratio
   height: 94 // Will adjust based on image aspect ratio
 };
