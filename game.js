@@ -17,7 +17,7 @@ let dinoSpriteIndex = 0;
 
 // Jumping variables
 let isJumping = false;
-const jumpHeight = 300;
+const jumpHeight = 500;
 let jumpVelocity = 10;
 const gravity = 0.5;
 let initialY = 0;
