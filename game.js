@@ -54,8 +54,8 @@ const skyClone = {
 };
 
 const dino = {
-  x: 40, // Doubled from 20px to 40px from left border
-  y: gameHeight - 287, // Increased by another 15px to 287px above bottom border
+  x: 40, //40px right of left border
+  y: gameHeight - 287, //287px above bottom border
   width: 88, // Will adjust based on image aspect ratio
   height: 94 // Will adjust based on image aspect ratio
 };
@@ -115,19 +115,19 @@ function update() {
     skyClone.x -= scrollSpeed;
     
     // Reset positions when elements go off-screen
-    if (ground.x <= -gameWidth) {
+    if (ground.x = -gameWidth) {
       ground.x = gameWidth;
     }
     
-    if (groundClone.x <= -gameWidth) {
+    if (groundClone.x = -gameWidth) {
       groundClone.x = gameWidth;
     }
     
-    if (sky.x <= -gameWidth) {
+    if (sky.x = -gameWidth) {
       sky.x = gameWidth;
     }
     
-    if (skyClone.x <= -gameWidth) {
+    if (skyClone.x = -gameWidth) {
       skyClone.x = gameWidth;
     }
   }
