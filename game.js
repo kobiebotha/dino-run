@@ -107,7 +107,7 @@ document.addEventListener('keydown', function(event) {
     } else if (gameState === 'PLAYING' && !isJumping) {
       // Start jump if on the ground
       isJumping = true;
-      jumpVelocity = 10;
+      jumpVelocity = 20;
       initialY = dino.y;
     } else if (gameState === 'LOSE') {
       // Reset the game
