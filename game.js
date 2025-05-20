@@ -7,15 +7,6 @@ const gameWidth = 1205;
 const gameHeight = 678;
 const scrollSpeed = 4; // 4px per frame scrolling speed
 
-// Game canvas setup
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-
-// Game variables
-const gameWidth = 1205;
-const gameHeight = 678;
-const scrollSpeed = 4; // 4px per frame scrolling speed
-
 // Game state
 let gameState = 'READY'; // 'READY' or 'PLAYING'
 
