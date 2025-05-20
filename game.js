@@ -10,6 +10,11 @@ const scrollSpeed = 4; // 4px per frame scrolling speed
 // Game state
 let gameState = 'READY'; // 'READY' or 'PLAYING'
 
+// Animation variables
+let animationTimer = 0;
+const animationInterval = 30; // Switch legs every 30 frames (approx 0.5s at 60fps)
+let dinoSpriteIndex = 0;
+
 // Load game assets
 const skyImage = new Image();
 skyImage.src = 'assets/sky.svg';
@@ -17,8 +22,14 @@ skyImage.src = 'assets/sky.svg';
 const groundImage = new Image();
 groundImage.src = 'assets/ground.svg';
 
-const dinoImage = new Image();
-dinoImage.src = 'assets/dino-standing.svg';
+const dinoStandingImage = new Image();
+dinoStandingImage.src = 'assets/dino-standing.svg';
+
+const dinoLeftLegImage = new Image();
+dinoLeftLegImage.src = 'assets/dino-left-leg.svg';
+
+const dinoRightLegImage = new Image();
+dinoRightLegImage.src = 'assets/dino-right-leg.svg';
 
 // Game elements
 // Original ground element
@@ -90,8 +101,15 @@ function init() {
   }
   
   // Draw dino
-  if (dinoImage.complete) {
-    ctx.drawImage(dinoImage, dino.x, dino.y, dino.width, dino.height);
+  if (dinoStandingImage.complete && dinoLeftLegImage.complete && dinoRightLegImage.complete) {
+    if (gameState === 'READY') {
+      // Use standing dino in READY state
+      ctx.drawImage(dinoStandingImage, dino.x, dino.y, dino.width, dino.height);
+    } else {
+      // Use animated dino in PLAYING state
+      const currentDinoImage = dinoSpriteIndex === 0 ? dinoLeftLegImage : dinoRightLegImage;
+      ctx.drawImage(currentDinoImage, dino.x, dino.y, dino.width, dino.height);
+    }
   }
   
   // Add text based on game state
@@ -106,6 +124,13 @@ function init() {
 // Update game elements
 function update() {
   if (gameState === 'PLAYING') {
+    // Handle animation timing
+    animationTimer++;
+    if (animationTimer >= animationInterval) {
+      animationTimer = 0;
+      dinoSpriteIndex = dinoSpriteIndex === 0 ? 1 : 0;
+    }
+    
     // Move original ground and sky to the left
     ground.x -= scrollSpeed;
     sky.x -= scrollSpeed;
@@ -135,7 +160,7 @@ function update() {
 
 // Make sure images are loaded before initializing
 let assetsLoaded = 0;
-const requiredAssets = 3; // Updated to include dino image
+const requiredAssets = 5; // Updated to include dino animations
 
 function checkAllAssetsLoaded() {
   assetsLoaded++;
@@ -146,12 +171,16 @@ function checkAllAssetsLoaded() {
 
 skyImage.onload = checkAllAssetsLoaded;
 groundImage.onload = checkAllAssetsLoaded;
-dinoImage.onload = checkAllAssetsLoaded;
+dinoStandingImage.onload = checkAllAssetsLoaded;
+dinoLeftLegImage.onload = checkAllAssetsLoaded;
+dinoRightLegImage.onload = checkAllAssetsLoaded;
 
 // In case images are already cached
 if (skyImage.complete) checkAllAssetsLoaded();
 if (groundImage.complete) checkAllAssetsLoaded();
-if (dinoImage.complete) checkAllAssetsLoaded();
+if (dinoStandingImage.complete) checkAllAssetsLoaded();
+if (dinoLeftLegImage.complete) checkAllAssetsLoaded();
+if (dinoRightLegImage.complete) checkAllAssetsLoaded();
 
 // Game loop
 function gameLoop() {
