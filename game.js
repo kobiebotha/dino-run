@@ -7,6 +7,15 @@ const gameWidth = 1205;
 const gameHeight = 678;
 const scrollSpeed = 4; // 4px per frame scrolling speed
 
+// Game canvas setup
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+// Game variables
+const gameWidth = 1205;
+const gameHeight = 678;
+const scrollSpeed = 4; // 4px per frame scrolling speed
+
 // Game state
 let gameState = 'READY'; // 'READY' or 'PLAYING'
 
@@ -14,6 +23,13 @@ let gameState = 'READY'; // 'READY' or 'PLAYING'
 let animationTimer = 0;
 const animationInterval = 15; // Switch legs every 15 frames (approx 0.5s at 60fps)
 let dinoSpriteIndex = 0;
+
+// Jumping variables
+let isJumping = false;
+const jumpHeight = 200;
+let jumpVelocity = 10;
+const gravity = 0.5;
+let initialY = 0;
 
 // Load game assets
 const skyImage = new Image();
@@ -74,8 +90,15 @@ const dino = {
 // Event listeners
 document.addEventListener('keydown', function(event) {
   // Check if the pressed key is the spacebar
-  if (event.code === 'Space' && gameState === 'READY') {
-    gameState = 'PLAYING';
+  if (event.code === 'Space') {
+    if (gameState === 'READY') {
+      gameState = 'PLAYING';
+    } else if (gameState === 'PLAYING' && !isJumping) {
+      // Start jump if on the ground
+      isJumping = true;
+      jumpVelocity = 10;
+      initialY = dino.y;
+    }
   }
 });
 
@@ -102,8 +125,8 @@ function init() {
   
   // Draw dino
   if (dinoStandingImage.complete && dinoLeftLegImage.complete && dinoRightLegImage.complete) {
-    if (gameState === 'READY') {
-      // Use standing dino in READY state
+    if (gameState === 'READY' || isJumping) {
+      // Use standing dino in READY state or when jumping
       ctx.drawImage(dinoStandingImage, dino.x, dino.y, dino.width, dino.height);
     } else {
       // Use animated dino in PLAYING state
@@ -124,11 +147,26 @@ function init() {
 // Update game elements
 function update() {
   if (gameState === 'PLAYING') {
-    // Handle animation timing
-    animationTimer++;
-    if (animationTimer >= animationInterval) {
-      animationTimer = 0;
-      dinoSpriteIndex = dinoSpriteIndex === 0 ? 1 : 0;
+    // Handle jumping
+    if (isJumping) {
+      // Apply gravity to velocity
+      jumpVelocity -= gravity;
+      
+      // Update dino position
+      dino.y -= jumpVelocity;
+      
+      // Check if dino has returned to the ground
+      if (dino.y >= initialY) {
+        dino.y = initialY;
+        isJumping = false;
+      }
+    } else {
+      // Handle animation timing
+      animationTimer++;
+      if (animationTimer >= animationInterval) {
+        animationTimer = 0;
+        dinoSpriteIndex = dinoSpriteIndex === 0 ? 1 : 0;
+      }
     }
     
     // Move original ground and sky to the left
