@@ -19,7 +19,7 @@ let dinoSpriteIndex = 0;
 let isJumping = false;
 const jumpHeight = 500;
 let jumpVelocity = 20;
-const gravity = 0.5;
+const gravity = 0.3;
 let initialY = 0;
 
 // Cactus variables
