@@ -276,7 +276,7 @@ function generateCactus() {
   // Create a new cactus
   const cactus = {
     x: gameWidth,
-    y: gameHeight - 256 - height,  // Place on the ground
+    y: gameHeight - 220 - height,  // Place on the ground
     width,
     height,
     image: selectedImage
