@@ -27,6 +27,10 @@ let cacti = [];
 let cactusTimer = 0;
 let nextCactusTime = getRandomCactusTime();
 
+// Define padding values for both objects
+const dinoHitboxPadding = { top: 10, bottom: 5, left: 8, right: 8 };
+const cactusHitboxPadding = { top: 5, bottom: 0, left: 12, right: 12 };
+
 // Load game assets
 const skyImage = new Image();
 skyImage.src = 'assets/sky.svg';
@@ -97,6 +101,29 @@ const dino = {
   width: 88, // Will adjust based on image aspect ratio
   height: 94 // Will adjust based on image aspect ratio
 };
+
+// Helper function to get a refined bounding box
+function getRefinedHitbox(obj, padding) {
+  return {
+    x: obj.x + padding.left,
+    y: obj.y + padding.top,
+    width: obj.width - padding.left - padding.right,
+    height: obj.height - padding.top - padding.bottom
+  };
+}
+
+// Refined collision detection function
+function checkRefinedCollision(a, aPadding, b, bPadding) {
+  const boxA = getRefinedHitbox(a, aPadding);
+  const boxB = getRefinedHitbox(b, bPadding);
+  
+  return (
+    boxA.x < boxB.x + boxB.width &&
+    boxA.x + boxA.width > boxB.x &&
+    boxA.y < boxB.y + boxB.height &&
+    boxA.y + boxA.height > boxB.y
+  );
+}
 
 // Event listeners
 document.addEventListener('keydown', function(event) {
@@ -291,8 +318,8 @@ function updateCacti() {
     const cactus = cacti[i];
     cactus.x -= scrollSpeed;
     
-    // Check for collision with dino
-    if (checkCollision(dino, cactus)) {
+    // Check for collision with dino using refined collision detection
+    if (checkRefinedCollision(dino, dinoHitboxPadding, cactus, cactusHitboxPadding)) {
       gameState = 'LOSE';
     }
     
@@ -307,16 +334,6 @@ function updateCacti() {
 function getRandomCactusTime() {
   // Return a random frame count between 1.4 and 3.4 seconds (at 60fps)
   return Math.floor(Math.random() * (204 - 84) + 84); // 1.4*60 = 84, 3.4*60 = 204
-}
-
-function checkCollision(a, b) {
-  // Simple AABB collision detection
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
 }
 
 function resetGame() {
