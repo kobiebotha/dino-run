@@ -16,9 +16,9 @@ groundImage.src = 'assets/ground.svg';
 // Game elements
 const ground = {
   x: 0,
-  y: gameHeight - 207, // Updated ground height to 207px
+  y: gameHeight - 256, // Updated ground height to 256px
   width: gameWidth,
-  height: 207 // Updated ground height to 207px
+  height: 256 // Updated ground height to 256px
 };
 
 const sky = {
