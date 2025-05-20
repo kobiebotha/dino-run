@@ -13,6 +13,9 @@ skyImage.src = 'assets/sky.svg';
 const groundImage = new Image();
 groundImage.src = 'assets/ground.svg';
 
+const dinoImage = new Image();
+dinoImage.src = 'assets/dino-standing.svg';
+
 // Game elements
 const ground = {
   x: 0,
@@ -26,6 +29,13 @@ const sky = {
   y: 0,
   width: gameWidth,
   height: 471 // Updated sky height to 471px
+};
+
+const dino = {
+  x: 20, // 20px from left border
+  y: gameHeight - 252, // 252px above bottom border
+  width: 88, // Will adjust based on image aspect ratio
+  height: 94 // Will adjust based on image aspect ratio
 };
 
 // Game initialization
@@ -47,6 +57,11 @@ function init() {
     ctx.drawImage(groundImage, ground.x, ground.y, ground.width, ground.height);
   }
   
+  // Draw dino
+  if (dinoImage.complete) {
+    ctx.drawImage(dinoImage, dino.x, dino.y, dino.width, dino.height);
+  }
+  
   // Add text to show the game is ready
   ctx.fillStyle = 'black';
   ctx.font = '30px Arial';
@@ -56,7 +71,7 @@ function init() {
 
 // Make sure images are loaded before initializing
 let assetsLoaded = 0;
-const requiredAssets = 2;
+const requiredAssets = 3; // Updated to include dino image
 
 function checkAllAssetsLoaded() {
   assetsLoaded++;
@@ -67,10 +82,12 @@ function checkAllAssetsLoaded() {
 
 skyImage.onload = checkAllAssetsLoaded;
 groundImage.onload = checkAllAssetsLoaded;
+dinoImage.onload = checkAllAssetsLoaded;
 
 // In case images are already cached
 if (skyImage.complete) checkAllAssetsLoaded();
 if (groundImage.complete) checkAllAssetsLoaded();
+if (dinoImage.complete) checkAllAssetsLoaded();
 
 // Game loop (will be implemented in future steps)
 function gameLoop() {
