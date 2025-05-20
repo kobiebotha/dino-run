@@ -27,51 +27,36 @@ let cacti = [];
 let cactusTimer = 0;
 let nextCactusTime = getRandomCactusTime();
 
-// Path data for the dino and cactus sprites
-const dinoPaths = {
-  standing: new Path2D('M40,30 h25 v-10 h10 v-10 h10 v-10 h-15 v5 h-5 v-5 h-5 v5 h-40 v5 h-5 v35 h5 v10 h10 v-10 h10 v-10 z'),
-  leftLeg: new Path2D('M40,30 h25 v-10 h10 v-10 h10 v-10 h-15 v5 h-5 v-5 h-5 v5 h-40 v5 h-5 v35 h5 v10 h10 v-10 h10 v-10 z M25,60 v15 h-10 v10 h20 v-25 h-10 z'),
-  rightLeg: new Path2D('M40,30 h25 v-10 h10 v-10 h10 v-10 h-15 v5 h-5 v-5 h-5 v5 h-40 v5 h-5 v35 h5 v10 h10 v-10 h10 v-10 z M45,60 v15 h-10 v10 h20 v-25 h-10 z'),
-  dead: new Path2D('M40,30 h25 v-10 h10 v-10 h10 v-10 h-15 v5 h-5 v-5 h-5 v5 h-40 v5 h-5 v35 h5 v10 h10 v-10 h10 v-10 z M45,5 l5,5 m-10,0 l5,-5')
-};
-
-const cactusPaths = [
-  // cactus1 - simple cactus
-  { 
-    path: new Path2D('M25,0 v50 h-15 v40 h5 v-35 h5 v35 h10 v-35 h5 v35 h5 v-40 h-15 v-50 z'),
-    width: 30, 
-    height: 90, 
-    weight: 1.5
-  },
-  // cactus2 - tall single cactus
-  {
-    path: new Path2D('M25,0 v70 h-15 v30 h5 v-25 h5 v25 h10 v-25 h5 v25 h5 v-30 h-15 v-70 z'),
-    width: 30, 
-    height: 100, 
-    weight: 1.5
-  },
-  // cactus-pair - two cacti close together
-  {
-    path: new Path2D('M15,20 v50 h-10 v30 h5 v-25 h5 v25 h5 v-30 h-5 v-50 z M45,0 v70 h-10 v30 h5 v-25 h5 v25 h5 v-30 h-5 v-70 z'),
-    width: 60, 
-    height: 100, 
-    weight: 1
-  },
-  // cactus-trio - three cacti of different heights
-  {
-    path: new Path2D('M15,20 v50 h-10 v30 h5 v-25 h5 v25 h5 v-30 h-5 v-50 z M45,0 v70 h-10 v30 h5 v-25 h5 v25 h5 v-30 h-5 v-70 z M75,10 v60 h-10 v30 h5 v-25 h5 v25 h5 v-30 h-5 v-60 z'),
-    width: 90, 
-    height: 100, 
-    weight: 1
-  }
-];
-
-// Load background images
+// Load game assets
 const skyImage = new Image();
 skyImage.src = 'assets/sky.svg';
 
 const groundImage = new Image();
 groundImage.src = 'assets/ground.svg';
+
+const dinoStandingImage = new Image();
+dinoStandingImage.src = 'assets/dino-standing.svg';
+
+const dinoLeftLegImage = new Image();
+dinoLeftLegImage.src = 'assets/dino-left-leg.svg';
+
+const dinoRightLegImage = new Image();
+dinoRightLegImage.src = 'assets/dino-right-leg.svg';
+
+const dinoDeadImage = new Image();
+dinoDeadImage.src = 'assets/dino-dead.svg';
+
+const cactusImages = [
+  { img: new Image(), weight: 1.5 },  // cactus1
+  { img: new Image(), weight: 1.5 },  // cactus2
+  { img: new Image(), weight: 1 },    // cactus-pair
+  { img: new Image(), weight: 1 }     // cactus-trio
+];
+
+cactusImages[0].img.src = 'assets/cactus1.svg';
+cactusImages[1].img.src = 'assets/cactus2.svg';
+cactusImages[2].img.src = 'assets/cactus-pair.svg';
+cactusImages[3].img.src = 'assets/cactus-trio.svg';
 
 // Game elements
 // Original ground element
@@ -110,8 +95,7 @@ const dino = {
   x: 40, //40px right of left border
   y: gameHeight - 287, //287px above bottom border
   width: 88, // Will adjust based on image aspect ratio
-  height: 94, // Will adjust based on image aspect ratio
-  path: dinoPaths.standing
+  height: 94 // Will adjust based on image aspect ratio
 };
 
 // Event listeners
@@ -157,26 +141,18 @@ function init() {
   drawCacti();
   
   // Draw dino
-  ctx.save();
-  ctx.translate(dino.x, dino.y);
-  
-  if (gameState === 'LOSE') {
-    ctx.fillStyle = '#000';
-    ctx.fill(dinoPaths.dead);
-  } else if (gameState === 'READY' || isJumping) {
-    // Use standing dino in READY state or when jumping
-    ctx.fillStyle = '#000';
-    ctx.fill(dinoPaths.standing);
-  } else {
-    // Use animated dino in PLAYING state
-    ctx.fillStyle = '#000';
-    if (dinoSpriteIndex === 0) {
-      ctx.fill(dinoPaths.leftLeg);
+  if (dinoStandingImage.complete && dinoLeftLegImage.complete && dinoRightLegImage.complete && dinoDeadImage.complete) {
+    if (gameState === 'LOSE') {
+      ctx.drawImage(dinoDeadImage, dino.x, dino.y, dino.width, dino.height);
+    } else if (gameState === 'READY' || isJumping) {
+      // Use standing dino in READY state or when jumping
+      ctx.drawImage(dinoStandingImage, dino.x, dino.y, dino.width, dino.height);
     } else {
-      ctx.fill(dinoPaths.rightLeg);
+      // Use animated dino in PLAYING state
+      const currentDinoImage = dinoSpriteIndex === 0 ? dinoLeftLegImage : dinoRightLegImage;
+      ctx.drawImage(currentDinoImage, dino.x, dino.y, dino.width, dino.height);
     }
   }
-  ctx.restore();
   
   // Add text based on game state
   if (gameState === 'READY') {
@@ -260,41 +236,50 @@ function update() {
 
 function drawCacti() {
   cacti.forEach(cactus => {
-    ctx.save();
-    ctx.translate(cactus.x, cactus.y);
-    ctx.fillStyle = '#000';
-    ctx.fill(cactus.path);
-    ctx.restore();
+    if (cactus.image.complete) {
+      ctx.drawImage(cactus.image, cactus.x, cactus.y, cactus.width, cactus.height);
+    }
   });
 }
 
 function generateCactus() {
   // Calculate the total weight
-  const totalWeight = cactusPaths.reduce((sum, cactus) => sum + cactus.weight, 0);
+  const totalWeight = cactusImages.reduce((sum, img) => sum + img.weight, 0);
   
   // Generate a random value between 0 and the total weight
   let random = Math.random() * totalWeight;
   let cumulativeWeight = 0;
   let selectedIndex = 0;
   
-  // Select a cactus based on its weight
-  for (let i = 0; i < cactusPaths.length; i++) {
-    cumulativeWeight += cactusPaths[i].weight;
+  // Select an image based on its weight
+  for (let i = 0; i < cactusImages.length; i++) {
+    cumulativeWeight += cactusImages[i].weight;
     if (random <= cumulativeWeight) {
       selectedIndex = i;
       break;
     }
   }
   
-  const selectedCactus = cactusPaths[selectedIndex];
+  const selectedImage = cactusImages[selectedIndex].img;
+  
+  // Define cactus dimensions (adjust as needed based on images)
+  let width, height;
+  
+  if (selectedIndex === 0 || selectedIndex === 1) {
+    width = 50;  // Small cacti
+    height = 100;
+  } else {
+    width = 100; // Large cacti
+    height = 100;
+  }
   
   // Create a new cactus
   const cactus = {
     x: gameWidth,
-    y: gameHeight - 190 - selectedCactus.height,
-    width: selectedCactus.width,
-    height: selectedCactus.height,
-    path: selectedCactus.path
+    y: gameHeight - 190 - height,  // Place on the ground
+    width,
+    height,
+    image: selectedImage
   };
   
   cacti.push(cactus);
@@ -324,61 +309,14 @@ function getRandomCactusTime() {
   return Math.floor(Math.random() * (204 - 84) + 84); // 1.4*60 = 84, 3.4*60 = 204
 }
 
-function checkCollision(dinoObj, cactusObj) {
-  // Create a temporary canvas for collision detection
-  const tempCanvas = document.createElement('canvas');
-  const tempCtx = tempCanvas.getContext('2d');
-  
-  // Set size to cover both objects
-  const left = Math.min(dinoObj.x, cactusObj.x);
-  const top = Math.min(dinoObj.y, cactusObj.y);
-  const right = Math.max(dinoObj.x + dinoObj.width, cactusObj.x + cactusObj.width);
-  const bottom = Math.max(dinoObj.y + dinoObj.height, cactusObj.y + cactusObj.height);
-  
-  tempCanvas.width = right - left;
-  tempCanvas.height = bottom - top;
-  
-  // Draw dino with a unique color
-  tempCtx.save();
-  tempCtx.translate(dinoObj.x - left, dinoObj.y - top);
-  tempCtx.fillStyle = '#FF0000'; // Red for dino
-  
-  // Choose the right dino path based on the game state
-  if (gameState === 'LOSE') {
-    tempCtx.fill(dinoPaths.dead);
-  } else if (gameState === 'READY' || isJumping) {
-    tempCtx.fill(dinoPaths.standing);
-  } else {
-    if (dinoSpriteIndex === 0) {
-      tempCtx.fill(dinoPaths.leftLeg);
-    } else {
-      tempCtx.fill(dinoPaths.rightLeg);
-    }
-  }
-  tempCtx.restore();
-  
-  // Draw cactus with a unique color
-  tempCtx.save();
-  tempCtx.translate(cactusObj.x - left, cactusObj.y - top);
-  tempCtx.fillStyle = '#00FF00'; // Green for cactus
-  tempCtx.fill(cactusObj.path);
-  tempCtx.restore();
-  
-  // Check for pixel color overlaps (collision)
-  const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-  const data = imageData.data;
-  
-  // Check for pixels that are both red and green (collision points)
-  for (let i = 0; i < data.length; i += 4) {
-    const red = data[i];
-    const green = data[i + 1];
-    // If a pixel has both red and green components, we have a collision
-    if (red > 200 && green > 200) {
-      return true;
-    }
-  }
-  
-  return false;
+function checkCollision(a, b) {
+  // Simple AABB collision detection
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
 }
 
 function resetGame() {
@@ -389,6 +327,40 @@ function resetGame() {
   isJumping = false;
   dino.y = initialY = gameHeight - 287;
 }
+
+// Make sure images are loaded before initializing
+let assetsLoaded = 0;
+const requiredAssets = 9; // Updated to include all images
+
+function checkAllAssetsLoaded() {
+  assetsLoaded++;
+  if (assetsLoaded >= requiredAssets) {
+    init();
+  }
+}
+
+skyImage.onload = checkAllAssetsLoaded;
+groundImage.onload = checkAllAssetsLoaded;
+dinoStandingImage.onload = checkAllAssetsLoaded;
+dinoLeftLegImage.onload = checkAllAssetsLoaded;
+dinoRightLegImage.onload = checkAllAssetsLoaded;
+dinoDeadImage.onload = checkAllAssetsLoaded;
+cactusImages[0].img.onload = checkAllAssetsLoaded;
+cactusImages[1].img.onload = checkAllAssetsLoaded;
+cactusImages[2].img.onload = checkAllAssetsLoaded;
+cactusImages[3].img.onload = checkAllAssetsLoaded;
+
+// In case images are already cached
+if (skyImage.complete) checkAllAssetsLoaded();
+if (groundImage.complete) checkAllAssetsLoaded();
+if (dinoStandingImage.complete) checkAllAssetsLoaded();
+if (dinoLeftLegImage.complete) checkAllAssetsLoaded();
+if (dinoRightLegImage.complete) checkAllAssetsLoaded();
+if (dinoDeadImage.complete) checkAllAssetsLoaded();
+if (cactusImages[0].img.complete) checkAllAssetsLoaded();
+if (cactusImages[1].img.complete) checkAllAssetsLoaded();
+if (cactusImages[2].img.complete) checkAllAssetsLoaded();
+if (cactusImages[3].img.complete) checkAllAssetsLoaded();
 
 // Game loop
 function gameLoop() {
