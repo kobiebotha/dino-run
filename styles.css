@@ -4,6 +4,14 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: 'Basic Sans';
+  src: url('fonts/basic-sans/Web Fonts/basicsans_bold/basicsans-bold-webfont.woff') format('woff'),
+       url('fonts/basic-sans/Web Fonts/basicsans_bold/Basic-Sans-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+}
+
 body {
   display: flex;
   justify-content: center;

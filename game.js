@@ -63,10 +63,10 @@ function init() {
   }
   
   // Add text to show the game is ready
-  ctx.fillStyle = 'black';
-  ctx.font = '30px Arial';
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 45px "Basic Sans", Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Dino Run Game - Ready to start', gameWidth / 2, gameHeight / 2);
+  ctx.fillText('PRESS SPACE TO START', gameWidth / 2, gameHeight / 2);
 }
 
 // Make sure images are loaded before initializing
