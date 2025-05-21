@@ -3,8 +3,8 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 // Game variables
-const gameWidth = 1205;
-const gameHeight = 678;
+const baseGameWidth = 1205;
+const baseGameHeight = 678;
 const scrollSpeed = 4; // 4px per frame scrolling speed
 
 // Game state
@@ -73,9 +73,9 @@ const ground = {
 
 // Clone ground element
 const groundClone = {
-  x: gameWidth, // Start at the right edge of the canvas
-  y: gameHeight - 256,
-  width: gameWidth,
+  x: baseGameWidth, // Start at the right edge of the canvas
+  y: baseGameHeight - 256,
+  width: baseGameWidth,
   height: 256
 };
 
@@ -83,21 +83,21 @@ const groundClone = {
 const sky = {
   x: 0,
   y: 0,
-  width: gameWidth,
+  width: baseGameWidth,
   height: 471 // Updated sky height to 471px
 };
 
 // Clone sky element
 const skyClone = {
-  x: gameWidth, // Start at the right edge of the canvas
+  x: baseGameWidth, // Start at the right edge of the canvas
   y: 0,
-  width: gameWidth,
+  width: baseGameWidth,
   height: 471
 };
 
 const dino = {
   x: 40, //40px right of left border
-  y: gameHeight - 287, //287px above bottom border
+  y: baseGameHeight - 287, //287px above bottom border
   width: 88, // Will adjust based on image aspect ratio
   height: 94 // Will adjust based on image aspect ratio
 };
@@ -186,15 +186,15 @@ function init() {
     ctx.fillStyle = 'white';
     ctx.font = 'bold 45px "Basic Sans", Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('PRESS SPACE TO START', gameWidth / 2, gameHeight / 2);
+    ctx.fillText('PRESS SPACE TO START', baseGameWidth / 2, baseGameHeight / 2);
   } else if (gameState === 'LOSE') {
     ctx.fillStyle = 'white';
     ctx.font = 'bold 72px "Basic Sans", Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', gameWidth / 2, gameHeight / 2 - 40);
+    ctx.fillText('GAME OVER', baseGameWidth / 2, baseGameHeight / 2 - 40);
     
     ctx.font = 'bold 36px "Basic Sans", Arial, sans-serif';
-    ctx.fillText('Press space to play again', gameWidth / 2, gameHeight / 2 + 40);
+    ctx.fillText('Press space to play again', baseGameWidth / 2, baseGameHeight / 2 + 40);
   }
 }
 
@@ -232,20 +232,20 @@ function update() {
     skyClone.x -= scrollSpeed;
     
     // Reset positions when elements go off-screen
-    if (ground.x <= -gameWidth) {
-      ground.x = groundClone.x + gameWidth;
+    if (ground.x <= -baseGameWidth) {
+      ground.x = groundClone.x + baseGameWidth;
     }
     
-    if (groundClone.x <= -gameWidth) {
-      groundClone.x = ground.x + gameWidth;
+    if (groundClone.x <= -baseGameWidth) {
+      groundClone.x = ground.x + baseGameWidth;
     }
     
-    if (sky.x <= -gameWidth) {
-      sky.x = skyClone.x + gameWidth;
+    if (sky.x <= -baseGameWidth) {
+      sky.x = skyClone.x + baseGameWidth;
     }
     
-    if (skyClone.x <= -gameWidth) {
-      skyClone.x = sky.x + gameWidth;
+    if (skyClone.x <= -baseGameWidth) {
+      skyClone.x = sky.x + baseGameWidth;
     }
     
     // Update cactus timer
@@ -302,8 +302,8 @@ function generateCactus() {
   
   // Create a new cactus
   const cactus = {
-    x: gameWidth,
-    y: gameHeight - 190 - height,  // Place on the ground
+    x: baseGameWidth,
+    y: baseGameHeight - 190 - height,  // Place on the ground
     width,
     height,
     image: selectedImage
@@ -342,7 +342,7 @@ function resetGame() {
   cactusTimer = 0;
   nextCactusTime = getRandomCactusTime();
   isJumping = false;
-  dino.y = initialY = gameHeight - 287;
+  dino.y = initialY = baseGameHeight - 287;
 }
 
 // Make sure images are loaded before initializing
