@@ -10,20 +10,36 @@ let scale = 1;
 function resizeCanvas() {
   const container = document.querySelector('.game-container');
 
-  const scaleX = window.innerWidth / baseGameWidth;
-  const scaleY = window.innerHeight / baseGameHeight;
-  scale = Math.max(1, Math.min(scaleX, scaleY)); // don't go below 1x scale
+  const aspectRatio = 16 / 9;
+  const minWidth = 1205;
+  const minHeight = 678;
 
-  const scaledWidth = baseGameWidth * scale;
-  const scaledHeight = baseGameHeight * scale;
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
 
-  // Resize canvas internal pixel resolution
-  canvas.width = scaledWidth;
-  canvas.height = scaledHeight;
+  // Calculate max canvas size that fits in window and maintains 16:9
+  let width = windowWidth;
+  let height = windowWidth / aspectRatio;
 
-  // Set CSS dimensions on the container
-  container.style.width = scaledWidth + 'px';
-  container.style.height = scaledHeight + 'px';
+  if (height > windowHeight) {
+    height = windowHeight;
+    width = windowHeight * aspectRatio;
+  }
+
+  // Enforce minimum size
+  width = Math.max(width, minWidth);
+  height = Math.max(height, minHeight);
+
+  // Compute scale based on base size (logical game resolution)
+  scale = width / baseGameWidth;
+
+  // Resize canvas internal resolution
+  canvas.width = baseGameWidth * scale;
+  canvas.height = baseGameHeight * scale;
+
+  // Resize container's visible size (CSS)
+  container.style.width = `${canvas.width}px`;
+  container.style.height = `${canvas.height}px`;
 }
 
 // Game canvas scroll speed
