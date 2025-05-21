@@ -146,11 +146,11 @@ document.addEventListener('keydown', function(event) {
 // Game initialization
 function init() {
   // Clear the canvas
-  ctx.clearRect(0, 0, gameWidth, gameHeight);
+  ctx.clearRect(0, 0, baseGameWidth, baseGameHeight);
   
   // Draw background
   ctx.fillStyle = '#f7f7f7';
-  ctx.fillRect(0, 0, gameWidth, gameHeight);
+  ctx.fillRect(0, 0, baseGameWidth, baseGameHeight);
   
   // Draw sky - original and clone
   if (skyImage.complete) {
