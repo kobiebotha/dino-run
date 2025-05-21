@@ -66,8 +66,8 @@ cactusImages[3].img.src = 'assets/cactus-trio.svg';
 // Original ground element
 const ground = {
   x: 0,
-  y: gameHeight - 256, // Updated ground height to 256px
-  width: gameWidth,
+  y: baseGameHeight - 256, // Updated ground height to 256px
+  width: baseGameWidth,
   height: 256 // Updated ground height to 256px
 };
 
