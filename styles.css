@@ -25,16 +25,12 @@ body {
 }
 
 .game-container {
-  position: relative;
-  overflow: hidden;
-  background-color: white;
+  background: white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-
-  /* Allow responsive scaling */
-  width: fit-content;
-  height: fit-content;
-  max-width: 100vw;
-  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 canvas {
