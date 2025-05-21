@@ -2,6 +2,11 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+// Game variables - define these before resizeCanvas function
+let gameWidth = canvas.width;
+let gameHeight = canvas.height;
+let scrollSpeed = gameWidth * 0.003; // Scale speed based on canvas width
+
 // Set canvas dimensions based on its CSS size
 function resizeCanvas() {
   canvas.width = canvas.clientWidth;
@@ -22,11 +27,6 @@ window.addEventListener('resize', () => {
 // Define padding values for both objects
 const dinoHitboxPadding = { top: 10, bottom: 5, left: 8, right: 8 };
 const cactusHitboxPadding = { top: 5, bottom: 0, left: 12, right: 12 };
-
-// Game variables
-let gameWidth = canvas.width;
-let gameHeight = canvas.height;
-let scrollSpeed = gameWidth * 0.003; // Scale speed based on canvas width
 
 // Game state
 let gameState = 'READY'; // 'READY', 'PLAYING', or 'LOSE'
