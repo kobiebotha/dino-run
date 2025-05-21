@@ -2,9 +2,28 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-// Game variables
+// Game canvas size and scale
 const baseGameWidth = 1205;
 const baseGameHeight = 678;
+let scale = 1;
+
+function resizeCanvas() {
+  const scaleX = window.innerWidth / baseGameWidth;
+  const scaleY = window.innerHeight / baseGameHeight;
+
+  // Maintain aspect ratio, but don't scale below 1x
+  scale = Math.max(1, Math.min(scaleX, scaleY));
+
+  // Set internal canvas resolution
+  canvas.width = baseGameWidth * scale;
+  canvas.height = baseGameHeight * scale;
+
+  // Set CSS size (optional)
+  canvas.style.width = canvas.width + 'px';
+  canvas.style.height = canvas.height + 'px';
+}
+
+// Game canvas scroll speed
 const scrollSpeed = 4; // 4px per frame scrolling speed
 
 // Game state
@@ -385,6 +404,10 @@ function gameLoop() {
   init();   // Redraw game elements
   requestAnimationFrame(gameLoop);
 }
+
+// Resize canvas on load and when window resizes
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 // Start the game loop
 gameLoop();
