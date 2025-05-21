@@ -2,10 +2,31 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+// Set canvas dimensions based on its CSS size
+function resizeCanvas() {
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  
+  // Reset any game measurements that depend on canvas size
+  resetGameMeasurements();
+}
+
+// Call once on initial load
+resizeCanvas();
+
+// Add resize listener
+window.addEventListener('resize', () => {
+  resizeCanvas();
+});
+
+// Define padding values for both objects
+const dinoHitboxPadding = { top: 10, bottom: 5, left: 8, right: 8 };
+const cactusHitboxPadding = { top: 5, bottom: 0, left: 12, right: 12 };
+
 // Game variables
-const gameWidth = 1205;
-const gameHeight = 678;
-const scrollSpeed = 4; // 4px per frame scrolling speed
+let gameWidth = canvas.width;
+let gameHeight = canvas.height;
+let scrollSpeed = gameWidth * 0.003; // Scale speed based on canvas width
 
 // Game state
 let gameState = 'READY'; // 'READY', 'PLAYING', or 'LOSE'
@@ -17,19 +38,15 @@ let dinoSpriteIndex = 0;
 
 // Jumping variables
 let isJumping = false;
-const jumpHeight = 500;
-let jumpVelocity = 20;
-const gravity = 0.4;
+let jumpHeight = gameHeight * 0.7;
+let jumpVelocity = gameHeight * 0.03;
+const gravity = gameHeight * 0.0006;
 let initialY = 0;
 
 // Cactus variables
 let cacti = [];
 let cactusTimer = 0;
 let nextCactusTime = getRandomCactusTime();
-
-// Define padding values for both objects
-const dinoHitboxPadding = { top: 10, bottom: 5, left: 8, right: 8 };
-const cactusHitboxPadding = { top: 5, bottom: 0, left: 12, right: 12 };
 
 // Load game assets
 const skyImage = new Image();
@@ -62,21 +79,57 @@ cactusImages[1].img.src = 'assets/cactus2.svg';
 cactusImages[2].img.src = 'assets/cactus-pair.svg';
 cactusImages[3].img.src = 'assets/cactus-trio.svg';
 
+// Recalculate game measurements when canvas size changes
+function resetGameMeasurements() {
+  gameWidth = canvas.width;
+  gameHeight = canvas.height;
+  
+  // Update speed based on canvas width
+  scrollSpeed = gameWidth * 0.003;
+  
+  // Update jump parameters based on canvas height
+  jumpHeight = gameHeight * 0.7;
+  jumpVelocity = gameHeight * 0.03;
+  
+  // Update ground and sky dimensions
+  ground.height = gameHeight * 0.38; // 38% of game height
+  ground.y = gameHeight - ground.height;
+  ground.width = gameWidth;
+  
+  groundClone.height = ground.height;
+  groundClone.y = ground.y;
+  groundClone.width = gameWidth;
+  
+  sky.height = gameHeight * 0.7; // 70% of game height
+  sky.width = gameWidth;
+  
+  skyClone.height = sky.height;
+  skyClone.width = gameWidth;
+  
+  // Update dino position
+  dino.y = gameHeight - (gameHeight * 0.42); // Positioned above ground
+  dino.width = gameWidth * 0.073; // ~7.3% of game width
+  dino.height = gameWidth * 0.078; // ~7.8% of game width
+  
+  // Reset initial Y for jumping
+  initialY = dino.y;
+}
+
 // Game elements
 // Original ground element
 const ground = {
   x: 0,
-  y: gameHeight - 256, // Updated ground height to 256px
+  y: gameHeight - (gameHeight * 0.38), // 38% of game height
   width: gameWidth,
-  height: 256 // Updated ground height to 256px
+  height: gameHeight * 0.38 // 38% of game height
 };
 
 // Clone ground element
 const groundClone = {
   x: gameWidth, // Start at the right edge of the canvas
-  y: gameHeight - 256,
+  y: gameHeight - (gameHeight * 0.38),
   width: gameWidth,
-  height: 256
+  height: gameHeight * 0.38
 };
 
 // Original sky element
@@ -84,7 +137,7 @@ const sky = {
   x: 0,
   y: 0,
   width: gameWidth,
-  height: 471 // Updated sky height to 471px
+  height: gameHeight * 0.7 // 70% of game height
 };
 
 // Clone sky element
@@ -92,14 +145,14 @@ const skyClone = {
   x: gameWidth, // Start at the right edge of the canvas
   y: 0,
   width: gameWidth,
-  height: 471
+  height: gameHeight * 0.7
 };
 
 const dino = {
-  x: 40, //40px right of left border
-  y: gameHeight - 287, //287px above bottom border
-  width: 88, // Will adjust based on image aspect ratio
-  height: 94 // Will adjust based on image aspect ratio
+  x: gameWidth * 0.033, // ~3.3% from left border
+  y: gameHeight - (gameHeight * 0.42), // Positioned above ground
+  width: gameWidth * 0.073, // ~7.3% of game width
+  height: gameWidth * 0.078 // ~7.8% of game width
 };
 
 // Helper function to get a refined bounding box
@@ -134,7 +187,7 @@ document.addEventListener('keydown', function(event) {
     } else if (gameState === 'PLAYING' && !isJumping) {
       // Start jump if on the ground
       isJumping = true;
-      jumpVelocity = 14;
+      jumpVelocity = gameHeight * 0.03;
       initialY = dino.y;
     } else if (gameState === 'LOSE') {
       // Reset the game
@@ -184,17 +237,17 @@ function init() {
   // Add text based on game state
   if (gameState === 'READY') {
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 45px "Basic Sans", Arial, sans-serif';
+    ctx.font = `bold ${gameHeight * 0.066}px "Basic Sans", Arial, sans-serif`; // ~4.5% of game height
     ctx.textAlign = 'center';
     ctx.fillText('PRESS SPACE TO START', gameWidth / 2, gameHeight / 2);
   } else if (gameState === 'LOSE') {
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 72px "Basic Sans", Arial, sans-serif';
+    ctx.font = `bold ${gameHeight * 0.106}px "Basic Sans", Arial, sans-serif`; // ~10.6% of game height
     ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', gameWidth / 2, gameHeight / 2 - 40);
+    ctx.fillText('GAME OVER', gameWidth / 2, gameHeight / 2 - gameHeight * 0.06);
     
-    ctx.font = 'bold 36px "Basic Sans", Arial, sans-serif';
-    ctx.fillText('Press space to play again', gameWidth / 2, gameHeight / 2 + 40);
+    ctx.font = `bold ${gameHeight * 0.053}px "Basic Sans", Arial, sans-serif`; // ~5.3% of game height
+    ctx.fillText('Press space to play again', gameWidth / 2, gameHeight / 2 + gameHeight * 0.06);
   }
 }
 
@@ -293,17 +346,17 @@ function generateCactus() {
   let width, height;
   
   if (selectedIndex === 0 || selectedIndex === 1) {
-    width = 50;  // Small cacti
-    height = 100;
+    width = gameWidth * 0.042;  // Small cacti, ~4.2% of game width
+    height = gameHeight * 0.15; // ~15% of game height
   } else {
-    width = 100; // Large cacti
-    height = 100;
+    width = gameWidth * 0.083;  // Large cacti, ~8.3% of game width
+    height = gameHeight * 0.15; // ~15% of game height
   }
   
   // Create a new cactus
   const cactus = {
     x: gameWidth,
-    y: gameHeight - 190 - height,  // Place on the ground
+    y: gameHeight - ground.height - height,
     width,
     height,
     image: selectedImage
@@ -333,7 +386,10 @@ function updateCacti() {
 
 function getRandomCactusTime() {
   // Return a random frame count between 1.4 and 3.4 seconds (at 60fps)
-  return Math.floor(Math.random() * (204 - 84) + 84); // 1.4*60 = 84, 3.4*60 = 204
+  // Scale this based on the game width to maintain consistent difficulty
+  const minTime = gameWidth * 0.07; // ~1.4s at original size
+  const maxTime = gameWidth * 0.17; // ~3.4s at original size
+  return Math.floor(Math.random() * (maxTime - minTime) + minTime);
 }
 
 function resetGame() {
@@ -342,7 +398,7 @@ function resetGame() {
   cactusTimer = 0;
   nextCactusTime = getRandomCactusTime();
   isJumping = false;
-  dino.y = initialY = gameHeight - 287;
+  dino.y = initialY = groundClone.y - dino.height;
 }
 
 // Make sure images are loaded before initializing
