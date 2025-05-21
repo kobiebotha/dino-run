@@ -8,19 +8,22 @@ const baseGameHeight = 678;
 let scale = 1;
 
 function resizeCanvas() {
+  const container = document.querySelector('.game-container');
+
   const scaleX = window.innerWidth / baseGameWidth;
   const scaleY = window.innerHeight / baseGameHeight;
+  scale = Math.max(1, Math.min(scaleX, scaleY)); // don't go below 1x scale
 
-  // Maintain aspect ratio, but don't scale below 1x
-  scale = Math.max(1, Math.min(scaleX, scaleY));
+  const scaledWidth = baseGameWidth * scale;
+  const scaledHeight = baseGameHeight * scale;
 
-  // Set internal canvas resolution
-  canvas.width = baseGameWidth * scale;
-  canvas.height = baseGameHeight * scale;
+  // Resize canvas internal pixel resolution
+  canvas.width = scaledWidth;
+  canvas.height = scaledHeight;
 
-  // Set CSS size (optional)
-  canvas.style.width = canvas.width + 'px';
-  canvas.style.height = canvas.height + 'px';
+  // Set CSS dimensions on the container
+  container.style.width = scaledWidth + 'px';
+  container.style.height = scaledHeight + 'px';
 }
 
 // Game canvas scroll speed
