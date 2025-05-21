@@ -164,11 +164,11 @@ document.addEventListener('keydown', function(event) {
 
 // Game initialization
 function init() {
+  // Ser scale transform before drawning
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  
   // Clear the canvas
   ctx.clearRect(0, 0, baseGameWidth, baseGameHeight);
-
-  // Scale everything drawn afterward
-  ctx.setTransform(scale, 0, 0, scale, 0, 0);
   
   // Draw background
   ctx.fillStyle = '#f7f7f7';
