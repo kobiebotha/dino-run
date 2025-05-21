@@ -62,9 +62,6 @@ function resetGameMeasurements() {
   }
 }
 
-// Call resetGameMeasurements initially
-resetGameMeasurements();
-
 // Handle window resize
 function resizeCanvas() {
   resetGameMeasurements();
@@ -144,6 +141,9 @@ const dino = {
   width: 88 * (gameHeight / 678), // Scaled based on canvas height
   height: 94 * (gameHeight / 678) // Scaled based on canvas height
 };
+
+// Now that dino is defined, we can call resetGameMeasurements
+resetGameMeasurements();
 
 // Helper function to get a refined bounding box
 function getRefinedHitbox(obj, padding) {
