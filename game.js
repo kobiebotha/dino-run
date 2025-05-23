@@ -9,18 +9,29 @@ let lastTimestamp = performance.now();
 
 function resizeCanvas() {
   const container = document.querySelector('.game-container');
-
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
 
-  // Set canvas resolution (in pixels)
-  canvas.width = baseGameWidth;
-  canvas.height = baseGameHeight; 
+  // Calculate the scale to fit the canvas while maintaining aspect ratio
+  const scaleX = windowWidth / baseGameWidth;
+  const scaleY = windowHeight / baseGameHeight;
+  const scale = Math.min(scaleX, scaleY);
 
+  // Set canvas size to fit the window while maintaining aspect ratio
+  canvas.style.width = `${baseGameWidth * scale}px`;
+  canvas.style.height = `${baseGameHeight * scale}px`;
+
+  // Set canvas resolution (in pixels) to maintain crisp rendering
+  canvas.width = baseGameWidth;
+  canvas.height = baseGameHeight;
 }
 
 // Game canvas scroll speed
 const scrollSpeedPerSecond = 240; // units per second at baseGameWidth scale
+
+// Score
+let score = 0;                    // current points
+const SCORE_PER_SECOND = 100;     // points added each second while playing
 
 // Game state
 let gameState = 'READY'; // 'READY', 'PLAYING', or 'LOSE'
@@ -41,10 +52,13 @@ let initialY = 0;
 let cacti = [];
 let cactusTimer = 0;  // Time in seconds since last spawn
 let nextCactusTime = getRandomCactusTime();  // Time in seconds until next spawn
+let isCactusRateHalved = false;
 
 // Define padding values for both objects
-const dinoHitboxPadding = { top: 10, bottom: 5, left: 8, right: 8 };
+const dinoHitboxPadding = { top: 10, bottom: 5, left: 22, right: 14 };
+const dinoDuckHitboxPadding = { top: 5, bottom: 2, left: 10, right: 10 }; // For ducking
 const cactusHitboxPadding = { top: 5, bottom: 0, left: 12, right: 12 };
+const evilDaxHitboxPadding = { top: 10, bottom: 10, left: 20, right: 20 }; // For evil-dax
 
 // Load game assets
 const skyImage = new Image();
@@ -64,6 +78,11 @@ dinoRightLegImage.src = 'assets/dino-right-leg.svg';
 
 const dinoDeadImage = new Image();
 dinoDeadImage.src = 'assets/dino-dead.svg';
+
+const dinoDuckLeftLegImage = new Image();
+dinoDuckLeftLegImage.src = 'assets/dino-duck-left-leg.svg';
+const dinoDuckRightLegImage = new Image();
+dinoDuckRightLegImage.src = 'assets/dino-duck-right-leg.svg';
 
 const cactusImages = [
   { img: new Image(), weight: 1.5 },  // cactus1
@@ -117,14 +136,32 @@ const dino = {
   height: 94 // Will adjust based on image aspect ratio
 };
 
+// Ducking state
+let isDucking = false;
+
+// Dino dimensions
+const DINO_DUCK_WIDTH = 118;
+const DINO_DUCK_HEIGHT = 56;
+
+// Load evil-dax sprites
+const evilDax1Image = new Image();
+evilDax1Image.src = 'assets/evil-dax1.svg';
+const evilDax2Image = new Image();
+evilDax2Image.src = 'assets/evil-dax2.svg';
+
+// Evil-dax variables
+let evilDaxes = [];
+let nextEvilDaxScore = 1500;
+let evilDaxSpawnTimer = 0;
+let evilDaxNextSpawnDelay = null;
+
 // Helper function to get a refined bounding box
-function getRefinedHitbox(obj, padding) {
-  return {
-    x: obj.x + padding.left,
-    y: obj.y + padding.top,
-    width: obj.width - padding.left - padding.right,
-    height: obj.height - padding.top - padding.bottom
-  };
+function getRefinedHitbox(obj, padding, override = {}) {
+  const x = (override.x !== undefined ? override.x : obj.x) + padding.left;
+  const y = (override.y !== undefined ? override.y : obj.y) + padding.top;
+  const width = (override.width !== undefined ? override.width : obj.width) - padding.left - padding.right;
+  const height = (override.height !== undefined ? override.height : obj.height) - padding.top - padding.bottom;
+  return { x, y, width, height };
 }
 
 // Refined collision detection function
@@ -142,8 +179,8 @@ function checkRefinedCollision(a, aPadding, b, bPadding) {
 
 // Event listeners
 document.addEventListener('keydown', function(event) {
-  // Check if the pressed key is the spacebar
-  if (event.code === 'Space') {
+  // Check if the pressed key is the spacebar, up arrow, or down arrow
+  if (event.code === 'Space' || event.code === 'ArrowUp') {
     if (gameState === 'READY') {
       gameState = 'PLAYING';
     } else if (gameState === 'PLAYING' && !isJumping) {
@@ -155,6 +192,16 @@ document.addEventListener('keydown', function(event) {
       // Reset the game
       resetGame();
     }
+  } else if (event.code === 'ArrowDown') {
+    if (gameState === 'PLAYING' && !isJumping) {
+      isDucking = true;
+    }
+  }
+});
+
+document.addEventListener('keyup', function(event) {
+  if (event.code === 'ArrowDown') {
+    isDucking = false;
   }
 });
 
@@ -184,18 +231,42 @@ function init() {
   drawCacti();
   
   // Draw dino
-  if (dinoStandingImage.complete && dinoLeftLegImage.complete && dinoRightLegImage.complete && dinoDeadImage.complete) {
+  if (
+    dinoStandingImage.complete &&
+    dinoLeftLegImage.complete &&
+    dinoRightLegImage.complete &&
+    dinoDeadImage.complete &&
+    dinoDuckLeftLegImage.complete &&
+    dinoDuckRightLegImage.complete
+  ) {
     if (gameState === 'LOSE') {
       ctx.drawImage(dinoDeadImage, dino.x, dino.y, dino.width, dino.height);
     } else if (gameState === 'READY' || isJumping) {
       // Use standing dino in READY state or when jumping
       ctx.drawImage(dinoStandingImage, dino.x, dino.y, dino.width, dino.height);
+    } else if (isDucking) {
+      // Use ducking dino images and alternate for animation
+      const currentDuckImage = dinoSpriteIndex === 0 ? dinoDuckLeftLegImage : dinoDuckRightLegImage;
+      ctx.drawImage(
+        currentDuckImage,
+        dino.x,
+        dino.y + (dino.height - DINO_DUCK_HEIGHT), // shift down so feet stay on ground
+        DINO_DUCK_WIDTH,
+        DINO_DUCK_HEIGHT
+      );
     } else {
       // Use animated dino in PLAYING state
       const currentDinoImage = dinoSpriteIndex === 0 ? dinoLeftLegImage : dinoRightLegImage;
       ctx.drawImage(currentDinoImage, dino.x, dino.y, dino.width, dino.height);
     }
   }
+  
+  // Draw score as 7-digit zero-padded number
+  ctx.fillStyle = 'yellow';
+  ctx.font = 'bold 48px Fira Mono, Consolas, "Courier New"';
+  ctx.textAlign = 'right';
+  const scoreString = Math.floor(score).toString().padStart(7, '0');
+  ctx.fillText(scoreString, baseGameWidth - 100, 60);
   
   // Add text based on game state
   if (gameState === 'READY') {
@@ -212,27 +283,42 @@ function init() {
     ctx.font = 'bold 36px "Basic Sans", Arial, sans-serif';
     ctx.fillText('Press space to play again', baseGameWidth / 2, baseGameHeight / 2 + 40);
   }
+
+  // Draw evil-daxes
+  evilDaxes.forEach(dax => {
+    const img = dax.animationIndex === 0 ? evilDax1Image : evilDax2Image;
+    if (img.complete) {
+      ctx.drawImage(img, dax.x, dax.y, dax.width, dax.height);
+    }
+  });
 }
 
 // Update game elements
 function update(deltaTime) {
   const effectiveSpeed = scrollSpeedPerSecond * deltaTime;
   if (gameState === 'PLAYING') {
+    // Accumulate score
+    score += SCORE_PER_SECOND * deltaTime;
     // Handle jumping
     if (isJumping) {
       // Apply gravity to velocity
       jumpVelocity -= gravity * deltaTime;
-      
       // Update dino position
       dino.y -= jumpVelocity * deltaTime;
-      
       // Check if dino has returned to the ground
       if (dino.y >= initialY) {
         dino.y = initialY;
         isJumping = false;
       }
+    } else if (isDucking) {
+      // Animate ducking
+      animationTimer += deltaTime;
+      if (animationTimer >= animationInterval) {
+        animationTimer = 0;
+        dinoSpriteIndex = dinoSpriteIndex === 0 ? 1 : 0;
+      }
     } else {
-      // Handle animation timing
+      // Animate running
       animationTimer += deltaTime;
       if (animationTimer >= animationInterval) {
         animationTimer = 0;
@@ -270,11 +356,37 @@ function update(deltaTime) {
     if (cactusTimer >= nextCactusTime) {
       generateCactus();
       cactusTimer = 0;
-      nextCactusTime = getRandomCactusTime();
+      nextCactusTime = getRandomCactusTime() * (isCactusRateHalved ? 2 : 1);
     }
     
     // Update cacti positions and check for collision
     updateCacti(deltaTime);
+
+    // Update evil-dax spawn logic
+    if (score >= 1500 && Math.floor(score) >= nextEvilDaxScore) {
+      if (evilDaxNextSpawnDelay === null) {
+        evilDaxNextSpawnDelay = Math.random() * 7 + 3; // 3-10 seconds
+        evilDaxSpawnTimer = 0;
+      }
+      evilDaxSpawnTimer += deltaTime;
+      if (evilDaxSpawnTimer >= evilDaxNextSpawnDelay) {
+        generateEvilDax();
+        nextEvilDaxScore += 1500;
+        evilDaxNextSpawnDelay = null;
+        evilDaxSpawnTimer = 0;
+      }
+    }
+    // Update evil-dax positions and check for collision
+    updateEvilDaxes(deltaTime);
+
+    // Determine if cactus rate should be halved
+    isCactusRateHalved = false;
+    if (
+      (evilDaxNextSpawnDelay !== null && evilDaxNextSpawnDelay - evilDaxSpawnTimer <= 6) ||
+      evilDaxes.length > 0
+    ) {
+      isCactusRateHalved = true;
+    }
   }
 }
 
@@ -331,18 +443,14 @@ function generateCactus() {
 
 function updateCacti(deltaTime) {
   const effectiveSpeed = scrollSpeedPerSecond * deltaTime;
-
   for (let i = 0; i < cacti.length; i++) {
     const cactus = cacti[i];
-
     // Move cactus to the left
     cactus.x -= effectiveSpeed;
-
     // Collision check
-    if (checkRefinedCollision(dino, dinoHitboxPadding, cactus, cactusHitboxPadding)) {
+    if (checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(cactus, cactusHitboxPadding))) {
       gameState = 'LOSE';
     }
-
     // Remove cactus if it's off-screen
     if (cactus.x + cactus.width < 0) {
       cacti.splice(i, 1);
@@ -363,11 +471,17 @@ function resetGame() {
   nextCactusTime = getRandomCactusTime();
   isJumping = false;
   dino.y = initialY = baseGameHeight - 287;
+  score = 0;
+  // Reset evil-dax variables:
+  evilDaxes = [];
+  nextEvilDaxScore = 1500;
+  evilDaxSpawnTimer = 0;
+  evilDaxNextSpawnDelay = null;
 }
 
 // Make sure images are loaded before initializing
 let assetsLoaded = 0;
-const requiredAssets = 9; // Updated to include all images
+const requiredAssets = 11; // Updated to include all images
 
 function checkAllAssetsLoaded() {
   assetsLoaded++;
@@ -382,10 +496,14 @@ dinoStandingImage.onload = checkAllAssetsLoaded;
 dinoLeftLegImage.onload = checkAllAssetsLoaded;
 dinoRightLegImage.onload = checkAllAssetsLoaded;
 dinoDeadImage.onload = checkAllAssetsLoaded;
+dinoDuckLeftLegImage.onload = checkAllAssetsLoaded;
+dinoDuckRightLegImage.onload = checkAllAssetsLoaded;
 cactusImages[0].img.onload = checkAllAssetsLoaded;
 cactusImages[1].img.onload = checkAllAssetsLoaded;
 cactusImages[2].img.onload = checkAllAssetsLoaded;
 cactusImages[3].img.onload = checkAllAssetsLoaded;
+evilDax1Image.onload = checkAllAssetsLoaded;
+evilDax2Image.onload = checkAllAssetsLoaded;
 
 // In case images are already cached
 if (skyImage.complete) checkAllAssetsLoaded();
@@ -394,10 +512,14 @@ if (dinoStandingImage.complete) checkAllAssetsLoaded();
 if (dinoLeftLegImage.complete) checkAllAssetsLoaded();
 if (dinoRightLegImage.complete) checkAllAssetsLoaded();
 if (dinoDeadImage.complete) checkAllAssetsLoaded();
+if (dinoDuckLeftLegImage.complete) checkAllAssetsLoaded();
+if (dinoDuckRightLegImage.complete) checkAllAssetsLoaded();
 if (cactusImages[0].img.complete) checkAllAssetsLoaded();
 if (cactusImages[1].img.complete) checkAllAssetsLoaded();
 if (cactusImages[2].img.complete) checkAllAssetsLoaded();
 if (cactusImages[3].img.complete) checkAllAssetsLoaded();
+if (evilDax1Image.complete) checkAllAssetsLoaded();
+if (evilDax2Image.complete) checkAllAssetsLoaded();
 
 // Game loop
 function gameLoop(timestamp) {
@@ -415,3 +537,66 @@ resizeCanvas();
 
 // Start the game loop
 gameLoop();
+
+function generateEvilDax() {
+  // Evil-dax dimensions
+  const width = 80;
+  const height = 84;
+  evilDaxes.push({
+    x: baseGameWidth,
+    y: baseGameHeight - 256 - 80, // 60px above ground
+    width,
+    height,
+    animationIndex: 0,
+    animationTimer: 0,
+    animationInterval: 0.2 // Flap every 0.2s
+  });
+}
+
+function updateEvilDaxes(deltaTime) {
+  const evilDaxSpeed = scrollSpeedPerSecond * 2 * deltaTime; // double cactus speed
+  for (let i = 0; i < evilDaxes.length; i++) {
+    const dax = evilDaxes[i];
+    dax.x -= evilDaxSpeed;
+    // Animate wings
+    dax.animationTimer += deltaTime;
+    if (dax.animationTimer >= dax.animationInterval) {
+      dax.animationTimer = 0;
+      dax.animationIndex = dax.animationIndex === 0 ? 1 : 0;
+    }
+    // Collision check
+    if (checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(dax, evilDaxHitboxPadding))) {
+      gameState = 'LOSE';
+    }
+    // Remove if off-screen
+    if (dax.x + dax.width < 0) {
+      evilDaxes.splice(i, 1);
+      i--;
+    }
+  }
+}
+
+function getCurrentDinoHitbox() {
+  if (isDucking) {
+    return getRefinedHitbox(
+      dino,
+      dinoDuckHitboxPadding,
+      {
+        y: dino.y + (dino.height - DINO_DUCK_HEIGHT),
+        height: DINO_DUCK_HEIGHT,
+        width: DINO_DUCK_WIDTH
+      }
+    );
+  } else {
+    return getRefinedHitbox(dino, dinoHitboxPadding);
+  }
+}
+
+function checkAABBCollision(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
+}

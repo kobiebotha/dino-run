@@ -28,10 +28,9 @@ body {
   background: white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  margin: 5vmin;  /* 5% of the smaller viewport dimension */
 }
 
 canvas {
   display: block;
-  width: 100%;
-  height: 100%;
 }
