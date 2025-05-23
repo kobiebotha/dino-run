@@ -6,44 +6,41 @@ const ctx = canvas.getContext('2d');
 const baseGameWidth = 1205;
 const baseGameHeight = 678;
 let scale = 1;
+let lastTimestamp = performance.now();
 
 function resizeCanvas() {
   const container = document.querySelector('.game-container');
 
-  const aspectRatio = 16 / 9;
-  const minWidth = 1205;
-  const minHeight = 678;
-
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
 
-  // Calculate max canvas size that fits in window and maintains 16:9
-  let width = windowWidth;
-  let height = windowWidth / aspectRatio;
+  const baseAspectRatio = baseGameWidth / baseGameHeight;
 
-  if (height > windowHeight) {
-    height = windowHeight;
-    width = windowHeight * aspectRatio;
-  }
+  // Compute the max scale that fits while preserving aspect ratio
+  const scaleX = windowWidth / baseGameWidth;
+  const scaleY = windowHeight / baseGameHeight;
 
-  // Enforce minimum size
-  width = Math.max(width, minWidth);
-  height = Math.max(height, minHeight);
+  // Use the smaller of the two to maintain aspect ratio
+  scale = Math.min(scaleX, scaleY);
 
-  // Compute scale based on base size (logical game resolution)
-  scale = width / baseGameWidth;
+  // Prevent shrinking smaller than 1x
+  scale = Math.max(1, scale);  // <== this is the fix
 
-  // Resize canvas internal resolution
+  const scaledWidth = baseGameWidth * scale;
+  const scaledHeight = baseGameHeight * scale;
+
+  // Set canvas resolution (in pixels)
   canvas.width = baseGameWidth * scale;
   canvas.height = baseGameHeight * scale;
 
-  // Resize container's visible size (CSS)
-  container.style.width = `${canvas.width}px`;
-  container.style.height = `${canvas.height}px`;
+  // Set CSS size of container
+  container.style.width = `${scaledWidth}px`;
+  container.style.height = `${scaledHeight}px`;
 }
 
 // Game canvas scroll speed
-const scrollSpeed = 4; // 4px per frame scrolling speed
+const baseScrollSpeed = 4; // 4px per frame scrolling speed
+const scrollSpeedPerSecond = 240; // units per second at baseGameWidth scale
 
 // Game state
 let gameState = 'READY'; // 'READY', 'PLAYING', or 'LOSE'
@@ -183,7 +180,7 @@ document.addEventListener('keydown', function(event) {
 
 // Game initialization
 function init() {
-  // Ser scale transform before drawning
+  // Set scale transform before drawing
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   
   // Clear the canvas
@@ -195,14 +192,14 @@ function init() {
   
   // Draw sky - original and clone
   if (skyImage.complete) {
-    ctx.drawImage(skyImage, sky.x, sky.y, sky.width, sky.height);
-    ctx.drawImage(skyImage, skyClone.x, skyClone.y, skyClone.width, skyClone.height);
+    ctx.drawImage(skyImage, Math.round(sky.x), sky.y, sky.width + 1, sky.height);
+    ctx.drawImage(skyImage, Math.round(skyClone.x), skyClone.y, skyClone.width + 1, skyClone.height);    
   }
   
   // Draw ground - original and clone
   if (groundImage.complete) {
-    ctx.drawImage(groundImage, ground.x, ground.y, ground.width, ground.height);
-    ctx.drawImage(groundImage, groundClone.x, groundClone.y, groundClone.width, groundClone.height);
+    ctx.drawImage(groundImage, Math.round(ground.x), ground.y, ground.width + 1, ground.height);
+    ctx.drawImage(groundImage, Math.round(groundClone.x), groundClone.y, groundClone.width + 1, groundClone.height);
   }
   
   // Draw cacti
@@ -240,7 +237,8 @@ function init() {
 }
 
 // Update game elements
-function update() {
+function update(deltaTime) {
+  const effectiveSpeed = scrollSpeedPerSecond * deltaTime;
   if (gameState === 'PLAYING') {
     // Handle jumping
     if (isJumping) {
@@ -265,12 +263,12 @@ function update() {
     }
     
     // Move original ground and sky to the left
-    ground.x -= scrollSpeed;
-    sky.x -= scrollSpeed;
+    ground.x -= effectiveSpeed;
+    sky.x -= effectiveSpeed;
     
     // Move clone ground and sky to the left
-    groundClone.x -= scrollSpeed;
-    skyClone.x -= scrollSpeed;
+    groundClone.x -= effectiveSpeed;
+    skyClone.x -= effectiveSpeed;
     
     // Reset positions when elements go off-screen
     if (ground.x <= -baseGameWidth) {
@@ -298,7 +296,7 @@ function update() {
     }
     
     // Update cacti positions and check for collision
-    updateCacti();
+    updateCacti(deltaTime);
   }
 }
 
@@ -353,18 +351,21 @@ function generateCactus() {
   cacti.push(cactus);
 }
 
-function updateCacti() {
-  // Move cacti to the left
+function updateCacti(deltaTime) {
+  const effectiveSpeed = scrollSpeedPerSecond * deltaTime;
+
   for (let i = 0; i < cacti.length; i++) {
     const cactus = cacti[i];
-    cactus.x -= scrollSpeed;
-    
-    // Check for collision with dino using refined collision detection
+
+    // Move cactus to the left
+    cactus.x -= effectiveSpeed;
+
+    // Collision check
     if (checkRefinedCollision(dino, dinoHitboxPadding, cactus, cactusHitboxPadding)) {
       gameState = 'LOSE';
     }
-    
-    // Remove cacti that are off screen
+
+    // Remove cactus if it's off-screen
     if (cactus.x + cactus.width < 0) {
       cacti.splice(i, 1);
       i--;
@@ -421,9 +422,12 @@ if (cactusImages[2].img.complete) checkAllAssetsLoaded();
 if (cactusImages[3].img.complete) checkAllAssetsLoaded();
 
 // Game loop
-function gameLoop() {
-  update(); // Update game elements
-  init();   // Redraw game elements
+function gameLoop(timestamp) {
+  const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
+  lastTimestamp = timestamp;
+
+  update(deltaTime);  // pass deltaTime to update
+  init();             // draw
   requestAnimationFrame(gameLoop);
 }
 

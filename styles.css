@@ -15,8 +15,8 @@
 body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
   background: #f0f0f0;
   overflow: hidden;
   display: flex;
@@ -28,9 +28,6 @@ body {
   background: white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 canvas {
