@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 export default defineConfig({
   root: '.',
-  publicDir: 'assets',
+  publicDir: 'public',
   build: {
     rollupOptions: {
       input: 'index.html',
