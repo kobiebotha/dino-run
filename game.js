@@ -5,7 +5,6 @@ const ctx = canvas.getContext('2d');
 // Game canvas size and scale
 const baseGameWidth = 1205;
 const baseGameHeight = 678;
-let scale = 1;
 let lastTimestamp = performance.now();
 
 function resizeCanvas() {
@@ -14,32 +13,13 @@ function resizeCanvas() {
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
 
-  const baseAspectRatio = baseGameWidth / baseGameHeight;
-
-  // Compute the max scale that fits while preserving aspect ratio
-  const scaleX = windowWidth / baseGameWidth;
-  const scaleY = windowHeight / baseGameHeight;
-
-  // Use the smaller of the two to maintain aspect ratio
-  scale = Math.min(scaleX, scaleY);
-
-  // Prevent shrinking smaller than 1x
-  scale = Math.max(1, scale);  // <== this is the fix
-
-  const scaledWidth = baseGameWidth * scale;
-  const scaledHeight = baseGameHeight * scale;
-
   // Set canvas resolution (in pixels)
-  canvas.width = baseGameWidth * scale;
-  canvas.height = baseGameHeight * scale;
+  canvas.width = baseGameWidth;
+  canvas.height = baseGameHeight; 
 
-  // Set CSS size of container
-  container.style.width = `${scaledWidth}px`;
-  container.style.height = `${scaledHeight}px`;
 }
 
 // Game canvas scroll speed
-const baseScrollSpeed = 4; // 4px per frame scrolling speed
 const scrollSpeedPerSecond = 240; // units per second at baseGameWidth scale
 
 // Game state
@@ -47,20 +27,20 @@ let gameState = 'READY'; // 'READY', 'PLAYING', or 'LOSE'
 
 // Animation variables
 let animationTimer = 0;
-const animationInterval = 15; // Switch legs every 15 frames (approx 0.5s at 60fps)
+const animationInterval = 0.25; // Switch legs every 0.25 seconds
 let dinoSpriteIndex = 0;
 
 // Jumping variables
 let isJumping = false;
-const jumpHeight = 500;
-let jumpVelocity = 20;
-const gravity = 0.4;
+const INITIAL_JUMP_VELOCITY = 600;  // pixels per second
+let jumpVelocity = INITIAL_JUMP_VELOCITY;  // Current velocity, starts at initial
+const gravity = 1000;  // pixels per second per second
 let initialY = 0;
 
 // Cactus variables
 let cacti = [];
-let cactusTimer = 0;
-let nextCactusTime = getRandomCactusTime();
+let cactusTimer = 0;  // Time in seconds since last spawn
+let nextCactusTime = getRandomCactusTime();  // Time in seconds until next spawn
 
 // Define padding values for both objects
 const dinoHitboxPadding = { top: 10, bottom: 5, left: 8, right: 8 };
@@ -169,7 +149,7 @@ document.addEventListener('keydown', function(event) {
     } else if (gameState === 'PLAYING' && !isJumping) {
       // Start jump if on the ground
       isJumping = true;
-      jumpVelocity = 14;
+      jumpVelocity = INITIAL_JUMP_VELOCITY;  // Reset to initial velocity
       initialY = dino.y;
     } else if (gameState === 'LOSE') {
       // Reset the game
@@ -180,8 +160,6 @@ document.addEventListener('keydown', function(event) {
 
 // Game initialization
 function init() {
-  // Set scale transform before drawing
-  ctx.setTransform(scale, 0, 0, scale, 0, 0);
   
   // Clear the canvas
   ctx.clearRect(0, 0, baseGameWidth, baseGameHeight);
@@ -243,10 +221,10 @@ function update(deltaTime) {
     // Handle jumping
     if (isJumping) {
       // Apply gravity to velocity
-      jumpVelocity -= gravity;
+      jumpVelocity -= gravity * deltaTime;
       
       // Update dino position
-      dino.y -= jumpVelocity;
+      dino.y -= jumpVelocity * deltaTime;
       
       // Check if dino has returned to the ground
       if (dino.y >= initialY) {
@@ -255,7 +233,7 @@ function update(deltaTime) {
       }
     } else {
       // Handle animation timing
-      animationTimer++;
+      animationTimer += deltaTime;
       if (animationTimer >= animationInterval) {
         animationTimer = 0;
         dinoSpriteIndex = dinoSpriteIndex === 0 ? 1 : 0;
@@ -288,7 +266,7 @@ function update(deltaTime) {
     }
     
     // Update cactus timer
-    cactusTimer++;
+    cactusTimer += deltaTime;
     if (cactusTimer >= nextCactusTime) {
       generateCactus();
       cactusTimer = 0;
@@ -374,8 +352,8 @@ function updateCacti(deltaTime) {
 }
 
 function getRandomCactusTime() {
-  // Return a random frame count between 1.4 and 3.4 seconds (at 60fps)
-  return Math.floor(Math.random() * (204 - 84) + 84); // 1.4*60 = 84, 3.4*60 = 204
+  // Return a random time between 1.4 and 3.4 seconds
+  return Math.random() * 2 + 1.4;
 }
 
 function resetGame() {
