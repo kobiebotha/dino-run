@@ -12,25 +12,30 @@
   font-style: normal;
 }
 
-body {
-  margin: 0;
-  padding: 0;
+html, body {
   width: 100vw;
   height: 100vh;
-  background: #f0f0f0;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
+  background: #f7f7f7;
+}
+
+.game-container {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.game-container {
-  background: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  margin: 5vmin;  /* 5% of the smaller viewport dimension */
-}
-
 canvas {
   display: block;
+  margin: 0;
+  background: #f7f7f7;
+  /* No width/height set here! */
 }
