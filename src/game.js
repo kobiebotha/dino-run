@@ -436,14 +436,16 @@ document.addEventListener('keyup', function(event) {
   }
 });
 
-// Make sure images are loaded before initializing
+// --- Asset Loading ---
+const requiredAssets = 14; // sky, ground, dino sprites, cactus images, evil dax images
 let assetsLoaded = 0;
-const requiredAssets = 11; // Updated to include all images
+let gameLoopStarted = false;
 
 function checkAllAssetsLoaded() {
   assetsLoaded++;
-  if (assetsLoaded >= requiredAssets) {
-    init();
+  if (assetsLoaded >= requiredAssets && !gameLoopStarted) {
+    gameLoopStarted = true;
+    gameLoop();
   }
 }
 
@@ -478,22 +480,14 @@ if (cactusImages[3].img.complete) checkAllAssetsLoaded();
 if (evilDax1Image.complete) checkAllAssetsLoaded();
 if (evilDax2Image.complete) checkAllAssetsLoaded();
 
-// Game loop
-function gameLoop(timestamp) {
-  const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
-  lastTimestamp = timestamp;
-
-  update(deltaTime);  // pass deltaTime to update
-  init();             // draw
-  requestAnimationFrame(gameLoop);
-}
-
-// Resize canvas on load and when window resizes
+// --- DOMContentLoaded: robust startup and resize handling ---
 window.addEventListener('DOMContentLoaded', () => {
   resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  // Fallback: ensure correct sizing after layout
-  requestAnimationFrame(resizeCanvas);
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    // Redraw immediately after resize
+    init();
+  });
 });
 
 function getRandomCactusTime() {
@@ -550,4 +544,14 @@ function getRefinedHitbox(obj, padding, override = {}) {
 // Helper to get the top y position of the ground in virtual coordinates
 function getGroundTopY() {
   return BASE_GAME_HEIGHT - GROUND_HEIGHT_RATIO * BASE_GAME_HEIGHT;
+}
+
+// Game loop
+function gameLoop(timestamp) {
+  const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
+  lastTimestamp = timestamp;
+
+  update(deltaTime);  // pass deltaTime to update
+  init();             // draw
+  requestAnimationFrame(gameLoop);
 }
