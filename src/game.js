@@ -102,31 +102,29 @@ function toPxH(h) { return h * canvas.height / BASE_GAME_HEIGHT; }
 // --- Update resizeCanvas to only resize canvas ---
 function resizeCanvas() {
   const aspect = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
-  let cssWidth = window.innerWidth;
-  let cssHeight = window.innerHeight;
-  if (cssWidth / cssHeight > aspect) {
-    cssWidth = cssHeight * aspect;
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  if (width / height > aspect) {
+    width = height * aspect;
   } else {
-    cssHeight = cssWidth / aspect;
+    height = width / aspect;
   }
+  // Set CSS size (in CSS pixels)
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  // Set internal resolution (in device pixels)
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.round(cssWidth * dpr);
-  canvas.height = Math.round(cssHeight * dpr);
-  canvas.style.width = cssWidth + 'px';
-  canvas.style.height = cssHeight + 'px';
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
 }
 
 // --- Update init() to use virtual coordinates and convert to pixels for drawing ---
 function init() {
-  // Calculate scale based on CSS size and virtual size
-  const cssWidth = parseFloat(canvas.style.width);
-  const scale = cssWidth / BASE_GAME_WIDTH;
-  const dpr = window.devicePixelRatio || 1;
-  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0); // Correct scaling for high-DPI
-
-  ctx.clearRect(0, 0, BASE_GAME_WIDTH, BASE_GAME_HEIGHT);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#f7f7f7';
-  ctx.fillRect(0, 0, BASE_GAME_WIDTH, BASE_GAME_HEIGHT);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw sky - original and clone
   if (skyImage.complete) {
