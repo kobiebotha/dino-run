@@ -122,9 +122,7 @@ function init() {
   const cssWidth = parseFloat(canvas.style.width);
   const scale = cssWidth / BASE_GAME_WIDTH;
   const dpr = window.devicePixelRatio || 1;
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
-  ctx.scale(dpr, dpr); // For sharpness
-  ctx.scale(scale, scale); // For aspect ratio scaling
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0); // Correct scaling for high-DPI
 
   ctx.clearRect(0, 0, BASE_GAME_WIDTH, BASE_GAME_HEIGHT);
   ctx.fillStyle = '#f7f7f7';
