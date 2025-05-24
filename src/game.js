@@ -99,7 +99,7 @@ function toPxY(y) { return y * canvas.height / BASE_GAME_HEIGHT; }
 function toPxW(w) { return w * canvas.width / BASE_GAME_WIDTH; }
 function toPxH(h) { return h * canvas.height / BASE_GAME_HEIGHT; }
 
-// --- Update resizeCanvas to only resize canvas ---
+// --- Update resizeCanvas to scale for both dpr and game scale ---
 function resizeCanvas() {
   const aspect = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
   let width = window.innerWidth;
@@ -116,8 +116,12 @@ function resizeCanvas() {
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.scale(dpr, dpr);
+
+  // Calculate scale factor for virtual game size
+  const scale = width / BASE_GAME_WIDTH;
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
+  ctx.scale(dpr * scale, dpr * scale); // Apply both dpr and game scaling
 }
 
 // --- Update init() to use virtual coordinates and convert to pixels for drawing ---
