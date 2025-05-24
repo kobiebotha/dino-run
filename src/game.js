@@ -99,7 +99,7 @@ function toPxY(y) { return y * canvas.height / BASE_GAME_HEIGHT; }
 function toPxW(w) { return w * canvas.width / BASE_GAME_WIDTH; }
 function toPxH(h) { return h * canvas.height / BASE_GAME_HEIGHT; }
 
-// --- Update resizeCanvas to scale for both dpr and game scale ---
+// --- Update resizeCanvas to only resize canvas ---
 function resizeCanvas() {
   const aspect = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
   let width = window.innerWidth;
@@ -116,12 +116,8 @@ function resizeCanvas() {
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
-
-  // Calculate scale factor for virtual game size
-  const scale = width / BASE_GAME_WIDTH;
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
-  ctx.scale(dpr * scale, dpr * scale); // Apply both dpr and game scaling
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
 }
 
 // --- Update init() to use virtual coordinates and convert to pixels for drawing ---
@@ -440,16 +436,14 @@ document.addEventListener('keyup', function(event) {
   }
 });
 
-// --- Asset Loading ---
-const requiredAssets = 14; // sky, ground, dino sprites, cactus images, evil dax images
+// Make sure images are loaded before initializing
 let assetsLoaded = 0;
-let gameLoopStarted = false;
+const requiredAssets = 11; // Updated to include all images
 
 function checkAllAssetsLoaded() {
   assetsLoaded++;
-  if (assetsLoaded >= requiredAssets && !gameLoopStarted) {
-    gameLoopStarted = true;
-    gameLoop();
+  if (assetsLoaded >= requiredAssets) {
+    init();
   }
 }
 
@@ -484,15 +478,22 @@ if (cactusImages[3].img.complete) checkAllAssetsLoaded();
 if (evilDax1Image.complete) checkAllAssetsLoaded();
 if (evilDax2Image.complete) checkAllAssetsLoaded();
 
-// --- DOMContentLoaded: robust startup and resize handling ---
-window.addEventListener('DOMContentLoaded', () => {
-  resizeCanvas();
-  window.addEventListener('resize', () => {
-    resizeCanvas();
-    // Redraw immediately after resize
-    init();
-  });
-});
+// Game loop
+function gameLoop(timestamp) {
+  const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
+  lastTimestamp = timestamp;
+
+  update(deltaTime);  // pass deltaTime to update
+  init();             // draw
+  requestAnimationFrame(gameLoop);
+}
+
+// Resize canvas on load and when window resizes
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Start the game loop
+gameLoop();
 
 function getRandomCactusTime() {
   // Return a random time between 1.4 and 3.4 seconds
@@ -548,14 +549,4 @@ function getRefinedHitbox(obj, padding, override = {}) {
 // Helper to get the top y position of the ground in virtual coordinates
 function getGroundTopY() {
   return BASE_GAME_HEIGHT - GROUND_HEIGHT_RATIO * BASE_GAME_HEIGHT;
-}
-
-// Game loop
-function gameLoop(timestamp) {
-  const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
-  lastTimestamp = timestamp;
-
-  update(deltaTime);  // pass deltaTime to update
-  init();             // draw
-  requestAnimationFrame(gameLoop);
 }
