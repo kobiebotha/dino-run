@@ -102,17 +102,18 @@ function toPxH(h) { return h * canvas.height / BASE_GAME_HEIGHT; }
 // --- Update resizeCanvas to only resize canvas ---
 function resizeCanvas() {
   const aspect = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
-  let width = window.innerWidth;
-  let height = window.innerHeight;
+  // Subtract margin from available space
+  const marginW = window.innerWidth * 0.10; // 5vw left + 5vw right
+  const marginH = window.innerHeight * 0.10; // 5vh top + 5vh bottom
+  let width = window.innerWidth - marginW;
+  let height = window.innerHeight - marginH;
   if (width / height > aspect) {
     width = height * aspect;
   } else {
     height = width / aspect;
   }
-  // Set CSS size (in CSS pixels)
   canvas.style.width = width + 'px';
   canvas.style.height = height + 'px';
-  // Set internal resolution (in device pixels)
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
