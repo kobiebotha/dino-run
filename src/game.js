@@ -489,11 +489,12 @@ function gameLoop(timestamp) {
 }
 
 // Resize canvas on load and when window resizes
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-// Start the game loop
-gameLoop();
+window.addEventListener('DOMContentLoaded', () => {
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  // Fallback: ensure correct sizing after layout
+  requestAnimationFrame(resizeCanvas);
+});
 
 function getRandomCactusTime() {
   // Return a random time between 1.4 and 3.4 seconds
