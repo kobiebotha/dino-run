@@ -397,14 +397,27 @@ function init() {
 
 // --- Update update() for responsive movement ---
 function update(deltaTime) {
-  const effectiveSpeed = (cssWidth / BASE_GAME_WIDTH) * scrollSpeedPerSecond * deltaTime;
+  const effectiveSpeed = scrollSpeedPerSecond * deltaTime;
+  if (window.DEBUG_SPEED) {
+    console.log({
+      cssWidth,
+      cssHeight,
+      windowInnerWidth: window.innerWidth,
+      windowInnerHeight: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      effectiveSpeed,
+      deltaTime
+    });
+  }
   // --- Tarpit event logic ---
   if (gameState === 'PLAYING') {
     // Move tarpits
     for (let i = 0; i < tarpits.length; i++) {
       tarpits[i].x -= effectiveSpeed;
       // Collision with dino
-      if (checkAABBCollision(getCurrentDinoHitbox(), tarpits[i])) {
+      if (!isRidingDax && checkAABBCollision(getCurrentDinoHitbox(), tarpits[i])) {
         gameState = 'LOSE';
       }
       // Remove tarpit if off-canvas
@@ -721,7 +734,7 @@ function updateCacti(deltaTime, effectiveSpeed) {
   for (let i = 0; i < cacti.length; i++) {
     const cactus = cacti[i];
     cactus.x -= effectiveSpeed;
-    if (checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(cactus, cactusHitboxPadding))) {
+    if (!isRidingDax && checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(cactus, cactusHitboxPadding))) {
       gameState = 'LOSE';
     }
     if (cactus.x + cactus.width < 0) {
@@ -755,7 +768,7 @@ function updateEvilDaxes(deltaTime, evilDaxSpeed) {
       dax.animationTimer = 0;
       dax.animationIndex = dax.animationIndex === 0 ? 1 : 0;
     }
-    if (checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(dax, evilDaxHitboxPadding))) {
+    if (!isRidingDax && checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(dax, evilDaxHitboxPadding))) {
       gameState = 'LOSE';
     }
     if (dax.x + dax.width < 0) {
@@ -895,7 +908,13 @@ if (swagRunTitleImage.complete) checkAllAssetsLoaded();
 requestAnimationFrame(gameLoop);
 
 // Game loop
+window._frameCount = 0;
 function gameLoop(timestamp) {
+  window._frameCount++;
+  if (window._frameCount % 60 === 0) {
+    console.log('Frames in last second:', window._frameCount);
+    window._frameCount = 0;
+  }
   const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
   lastTimestamp = timestamp;
 
