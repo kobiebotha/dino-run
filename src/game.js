@@ -38,6 +38,7 @@ let tarpits = [];
 let goodDax = null;
 let nextTarpitScore = 4500;
 let tarpitActive = false;
+let goodDaxUsed = false;
 // --- Ride state variables ---
 let isRidingDax = false;
 let rideStartScore = 0;
@@ -318,6 +319,7 @@ function update(deltaTime) {
         evilDaxSpawnTimer = 0;
         // Set nextEvilDaxScore to the next future multiple of 1500
         nextEvilDaxScore = Math.ceil(score / 1500) * 1500;
+        goodDaxUsed = false;
       }
     }
   }
@@ -339,7 +341,7 @@ function update(deltaTime) {
     isCactusRateHalved = false;
   }
   // Good dax spawns 200 points after tarpit event
-  if (tarpitActive && !goodDax && Math.floor(score) >= nextTarpitScore - 4300) {
+  if (tarpitActive && !goodDax && !goodDaxUsed && Math.floor(score) >= nextTarpitScore - 4300) {
     goodDax = {
       x: -100,
       y: getGroundTopY() - 200,
@@ -351,6 +353,7 @@ function update(deltaTime) {
       animationIndex: 0,
       animationTimer: 0
     };
+    goodDaxUsed = true;
   }
   // Move good dax
   if (goodDax) {
@@ -380,7 +383,9 @@ function update(deltaTime) {
   if (gameState === 'PLAYING') {
     score += SCORE_PER_SECOND * deltaTime;
     if (isJumping) {
-      jumpVelocity -= gravity * deltaTime;
+      const fastFallGravity = gravity * 9;
+      const currentGravity = keysDown['ArrowDown'] ? fastFallGravity : gravity;
+      jumpVelocity -= currentGravity * deltaTime;
       dino.y -= jumpVelocity * deltaTime;
       if (dino.y >= initialY) {
         dino.y = initialY;
@@ -447,6 +452,7 @@ function update(deltaTime) {
       dinoDaxPos = { x: goodDax.x, y: goodDax.y };
       isJumping = false;
       goodDax = null;
+      goodDaxUsed = true;
     }
   }
   // --- Dino-dax ride logic ---
@@ -502,7 +508,10 @@ function update(deltaTime) {
   }
   // --- Animate falling dino ---
   if (fallingDino) {
-    fallingDino.vy += gravity * deltaTime;
+    const fastFallGravity = gravity * 9;
+    // Use fast gravity if down arrow is pressed
+    const currentGravity = keysDown['ArrowDown'] ? fastFallGravity : gravity;
+    fallingDino.vy += currentGravity * deltaTime;
     fallingDino.y += fallingDino.vy * deltaTime;
     const landingY = getGroundTopY() - DINO_STAND_HEIGHT + GROUND_OVERLAP;
     if (fallingDino.y >= landingY) {
@@ -656,6 +665,7 @@ function resetGame() {
   fallingDino = null;
   flyingDax = null;
   dinoDaxPos = null;
+  goodDaxUsed = false;
 }
 
 // Event listeners
