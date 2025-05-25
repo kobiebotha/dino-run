@@ -46,6 +46,10 @@ let evilDaxNextSpawnDelay = null;
 let evilDaxSpawnTimer = 0;
 let nextEvilDaxScore = 1500;
 
+// --- Global variables for CSS size ---
+let cssWidth = 0;
+let cssHeight = 0;
+
 // --- Asset Loading ---
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -93,13 +97,13 @@ let groundClone = { x: BASE_GAME_WIDTH, y: getGroundTopY(), width: BASE_GAME_WID
 let sky = { x: 0, y: 0, width: BASE_GAME_WIDTH, height: 471 };
 let skyClone = { x: BASE_GAME_WIDTH, y: 0, width: BASE_GAME_WIDTH, height: 471 };
 
-// --- Drawing helpers: convert virtual to pixel ---
-function toPxX(x) { return x * canvas.width / BASE_GAME_WIDTH; }
-function toPxY(y) { return y * canvas.height / BASE_GAME_HEIGHT; }
-function toPxW(w) { return w * canvas.width / BASE_GAME_WIDTH; }
-function toPxH(h) { return h * canvas.height / BASE_GAME_HEIGHT; }
+// --- Drawing helpers: convert virtual to pixel (using CSS size) ---
+function toPxX(x) { return x * cssWidth / BASE_GAME_WIDTH; }
+function toPxY(y) { return y * cssHeight / BASE_GAME_HEIGHT; }
+function toPxW(w) { return w * cssWidth / BASE_GAME_WIDTH; }
+function toPxH(h) { return h * cssHeight / BASE_GAME_HEIGHT; }
 
-// --- Update resizeCanvas to only resize canvas ---
+// --- Update resizeCanvas to store CSS size ---
 function resizeCanvas() {
   const aspect = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
   // Subtract margin from available space
@@ -112,11 +116,13 @@ function resizeCanvas() {
   } else {
     height = width / aspect;
   }
-  canvas.style.width = width + 'px';
-  canvas.style.height = height + 'px';
+  cssWidth = width;
+  cssHeight = height;
+  canvas.style.width = cssWidth + 'px';
+  canvas.style.height = cssHeight + 'px';
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.round(width * dpr);
-  canvas.height = Math.round(height * dpr);
+  canvas.width = Math.round(cssWidth * dpr);
+  canvas.height = Math.round(cssHeight * dpr);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(dpr, dpr);
 }
@@ -200,23 +206,23 @@ function init() {
 
   // Draw score as 7-digit zero-padded number
   ctx.fillStyle = 'yellow';
-  ctx.font = `bold ${Math.floor(canvas.height * 0.07)}px Fira Mono, Consolas, 'Courier New'`;
+  ctx.font = `bold ${Math.floor(cssHeight * 0.07)}px Fira Mono, Consolas, 'Courier New'`;
   ctx.textAlign = 'right';
   const scoreString = Math.floor(score).toString().padStart(7, '0');
-  ctx.fillText(scoreString, canvas.width - 100, 60);
+  ctx.fillText(scoreString, cssWidth - 100, 60 * (cssHeight / BASE_GAME_HEIGHT));
 
   // Add text based on game state
   ctx.textAlign = 'center';
   if (gameState === 'READY') {
     ctx.fillStyle = 'white';
-    ctx.font = `bold ${Math.floor(canvas.height * 0.065)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.fillText('PRESS SPACE TO START', canvas.width / 2, canvas.height / 2);
+    ctx.font = `bold ${Math.floor(cssHeight * 0.065)}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillText('PRESS SPACE TO START', cssWidth / 2, cssHeight / 2);
   } else if (gameState === 'LOSE') {
     ctx.fillStyle = 'white';
-    ctx.font = `bold ${Math.floor(canvas.height * 0.11)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
-    ctx.font = `bold ${Math.floor(canvas.height * 0.05)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.fillText('Press space to play again', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.font = `bold ${Math.floor(cssHeight * 0.11)}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillText('GAME OVER', cssWidth / 2, cssHeight / 2 - 40 * (cssHeight / BASE_GAME_HEIGHT));
+    ctx.font = `bold ${Math.floor(cssHeight * 0.05)}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillText('Press space to play again', cssWidth / 2, cssHeight / 2 + 40 * (cssHeight / BASE_GAME_HEIGHT));
   }
 
   // Draw evil-daxes
@@ -230,7 +236,7 @@ function init() {
 
 // --- Update update() for responsive movement ---
 function update(deltaTime) {
-  const effectiveSpeed = (canvas.width / BASE_GAME_WIDTH) * scrollSpeedPerSecond * deltaTime;
+  const effectiveSpeed = (cssWidth / BASE_GAME_WIDTH) * scrollSpeedPerSecond * deltaTime;
   if (gameState === 'PLAYING') {
     score += SCORE_PER_SECOND * deltaTime;
     if (isJumping) {
