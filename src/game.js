@@ -1,22 +1,10 @@
 // --- Constants ---
 const BASE_GAME_WIDTH = 1205;
 const BASE_GAME_HEIGHT = 678;
-const DINO_X_RATIO = 40 / BASE_GAME_WIDTH;
-const DINO_Y_RATIO = (BASE_GAME_HEIGHT - 287) / BASE_GAME_HEIGHT;
-const DINO_WIDTH_RATIO = 88 / BASE_GAME_WIDTH;
-const DINO_HEIGHT_RATIO = 94 / BASE_GAME_HEIGHT;
-const DINO_DUCK_WIDTH_RATIO = 118 / BASE_GAME_WIDTH;
-const DINO_DUCK_HEIGHT_RATIO = 56 / BASE_GAME_HEIGHT;
 const GROUND_HEIGHT_RATIO = 256 / BASE_GAME_HEIGHT;
 const SKY_HEIGHT_RATIO = 471 / BASE_GAME_HEIGHT;
-const CACTUS_SMALL_WIDTH_RATIO = 50 / BASE_GAME_WIDTH;
-const CACTUS_LARGE_WIDTH_RATIO = 100 / BASE_GAME_WIDTH;
 const CACTUS_HEIGHT_RATIO = 100 / BASE_GAME_HEIGHT;
 const CACTUS_Y_OFFSET_RATIO = 190 / BASE_GAME_HEIGHT;
-const EVIL_DAX_WIDTH_RATIO = 80 / BASE_GAME_WIDTH;
-const EVIL_DAX_HEIGHT_RATIO = 84 / BASE_GAME_HEIGHT;
-const EVIL_DAX_Y_OFFSET_RATIO = 256 / BASE_GAME_HEIGHT;
-const EVIL_DAX_ABOVE_GROUND_RATIO = 80 / BASE_GAME_HEIGHT;
 const scrollSpeedPerSecond = 240;
 const SCORE_PER_SECOND = 100;
 const animationInterval = 0.25;
@@ -505,35 +493,6 @@ gameLoop();
 function getRandomCactusTime() {
   // Return a random time between 1.4 and 3.4 seconds
   return Math.random() * 2 + 1.4;
-}
-
-// --- Helper functions for responsive positions/sizes ---
-function getDinoRect(isDucking = false) {
-  // Return virtual coordinates, not pixels
-  const x = dino.x;
-  const y = dino.y;
-  const width = isDucking ? 118 : 88;
-  const height = isDucking ? 56 : 94;
-  return { x, y, width, height };
-}
-
-function getGroundRect() {
-  const y = canvas.height - GROUND_HEIGHT_RATIO * canvas.height;
-  return {
-    x: 0,
-    y,
-    width: canvas.width,
-    height: GROUND_HEIGHT_RATIO * canvas.height
-  };
-}
-
-function getSkyRect() {
-  return {
-    x: 0,
-    y: 0,
-    width: canvas.width,
-    height: SKY_HEIGHT_RATIO * canvas.height
-  };
 }
 
 function checkAABBCollision(a, b) {
