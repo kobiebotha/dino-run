@@ -5,7 +5,7 @@ const GROUND_HEIGHT_RATIO = 256 / BASE_GAME_HEIGHT;
 const SKY_HEIGHT_RATIO = 471 / BASE_GAME_HEIGHT;
 const CACTUS_HEIGHT_RATIO = 100 / BASE_GAME_HEIGHT;
 const CACTUS_Y_OFFSET_RATIO = 190 / BASE_GAME_HEIGHT;
-const scrollSpeedPerSecond = 240;
+const scrollSpeedPerSecond = 120;
 const SCORE_PER_SECOND = 100;
 const animationInterval = 0.25;
 const INITIAL_JUMP_VELOCITY = 600;
@@ -108,6 +108,20 @@ const dinoDax1Image = new Image();
 dinoDax1Image.src = 'assets/dino-dax1.svg';
 const dinoDax2Image = new Image();
 dinoDax2Image.src = 'assets/dino-dax2.svg';
+
+// Asset loading for swag-run-title
+const swagRunTitleImage = new Image();
+swagRunTitleImage.src = 'assets/swag-run-title.svg';
+
+// --- Animation state for title and text ---
+let readyPulseTimer = 0;
+let gameOverTimer = 0;
+const SWAG_TITLE_WIDTH = 566;
+const SWAG_TITLE_HEIGHT = 329;
+const TITLE_SCALE_MIN = 0.92;
+const TITLE_SCALE_MAX = 1.08;
+const TITLE_PULSE_SPEED = 2 * Math.PI / 2; // 1 pulse per second
+const SPACE_COLORS = ['#ffe600', '#ffb347', '#6ee7b7', '#60a5fa', '#f472b6'];
 
 // --- Store all positions in virtual coordinates (base size) ---
 let dino = { x: 40, y: getGroundTopY() - DINO_STAND_HEIGHT + GROUND_OVERLAP, width: 88, height: DINO_STAND_HEIGHT };
@@ -249,6 +263,63 @@ function init() {
   const scoreString = Math.floor(score).toString().padStart(7, '0');
   ctx.fillText(scoreString, cssWidth - 100, 60 * (cssHeight / BASE_GAME_HEIGHT));
 
+  // --- READY STATE: Draw swag-run-title and animated text ---
+  if (gameState === 'READY') {
+    // Pulse calculation
+    const pulse = (Math.sin(readyPulseTimer * TITLE_PULSE_SPEED) + 1) / 2; // 0..1
+    const scale = TITLE_SCALE_MIN + (TITLE_SCALE_MAX - TITLE_SCALE_MIN) * pulse;
+    // Centered position
+    const titleDrawWidth = SWAG_TITLE_WIDTH * scale * (cssWidth / BASE_GAME_WIDTH);
+    const titleDrawHeight = SWAG_TITLE_HEIGHT * scale * (cssHeight / BASE_GAME_HEIGHT);
+    const titleX = (cssWidth - titleDrawWidth) / 2;
+    const titleY = (cssHeight - titleDrawHeight) / 2 - 60;
+    // Only draw the image if loaded
+    if (swagRunTitleImage.complete && swagRunTitleImage.naturalWidth > 0) {
+      ctx.save();
+      ctx.drawImage(swagRunTitleImage, titleX, titleY, titleDrawWidth, titleDrawHeight);
+      ctx.restore();
+    }
+    // Animated 'PRESS SPACE TO START' text (always draw)
+    ctx.textAlign = 'left';
+    ctx.font = `bold ${Math.floor(cssHeight * 0.065)}px 'Basic Sans', Arial, sans-serif`;
+    // Color for 'SPACE'
+    const colorIndex = Math.floor(pulse * (SPACE_COLORS.length - 1));
+    const spaceColor = SPACE_COLORS[colorIndex];
+    // Split and measure text
+    const pre = 'PRESS ';
+    const space = 'SPACE';
+    const post = ' TO START';
+    const y = titleY + titleDrawHeight + 100;
+    // Measure widths
+    const preWidth = ctx.measureText(pre).width;
+    const spaceWidth = ctx.measureText(space).width;
+    const postWidth = ctx.measureText(post).width;
+    const totalWidth = preWidth + spaceWidth + postWidth;
+    const startX = cssWidth / 2 - totalWidth / 2;
+    // Draw 'PRESS '
+    ctx.fillStyle = 'white';
+    ctx.fillText(pre, startX, y);
+    // Draw 'SPACE' in color
+    ctx.fillStyle = spaceColor;
+    ctx.fillText(space, startX + preWidth, y);
+    // Draw ' TO START'
+    ctx.fillStyle = 'white';
+    ctx.fillText(post, startX + preWidth + spaceWidth, y);
+    return; // Don't draw other overlays in READY
+  }
+
+  // --- GAME OVER STATE: Auto-return to READY after 10s ---
+  if (gameState === 'LOSE') {
+    gameOverTimer += 1 / 60; // Approximate, will be reset on state change
+    if (gameOverTimer >= 10) {
+      gameState = 'READY';
+      gameOverTimer = 0;
+      return;
+    }
+  } else {
+    gameOverTimer = 0;
+  }
+
   // Add text based on game state
   ctx.textAlign = 'center';
   if (gameState === 'READY') {
@@ -291,6 +362,36 @@ function init() {
   if (flyingDax) {
     const img = flyingDax.animationIndex === 0 ? goodDax1Image : goodDax2Image;
     ctx.drawImage(img, toPxX(flyingDax.x), toPxY(flyingDax.y), toPxW(flyingDax.width), toPxH(flyingDax.height));
+  }
+
+  // Draw score explosions
+  for (const exp of scoreExplosions) {
+    const t = exp.timer / exp.duration;
+    const scale = 1 + 1.5 * t;
+    const alpha = 1 - t;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `bold ${Math.floor(cssHeight * 0.13)}px 'Basic Sans', Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.translate(cssWidth / 2, cssHeight / 2);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 8;
+    ctx.strokeText(exp.value.toString(), 0, 0);
+    ctx.fillText(exp.value.toString(), 0, 0);
+    ctx.restore();
+    // Draw particles
+    for (const p of exp.particles) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(cssWidth / 2 + p.x, cssHeight / 2 + p.y, p.radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 }
 
@@ -534,6 +635,46 @@ function update(deltaTime) {
       flyingDax = null;
     }
   }
+
+  // --- Score explosion trigger ---
+  const roundedScore = Math.floor(score / 1000) * 1000;
+  if (score >= 1000 && roundedScore !== lastExplosionScore) {
+    lastExplosionScore = roundedScore;
+    // Create explosion
+    const particles = [];
+    for (let i = 0; i < SCORE_EXPLOSION_PARTICLES; i++) {
+      const angle = (2 * Math.PI * i) / SCORE_EXPLOSION_PARTICLES;
+      const speed = 180 + Math.random() * 80;
+      particles.push({
+        x: 0, y: 0,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        color: SCORE_EXPLOSION_COLORS[i % SCORE_EXPLOSION_COLORS.length],
+        radius: 8 + Math.random() * 6
+      });
+    }
+    scoreExplosions.push({
+      value: roundedScore,
+      timer: 0,
+      duration: SCORE_EXPLOSION_DURATION,
+      particles
+    });
+  }
+  // --- Animate score explosions ---
+  for (let i = scoreExplosions.length - 1; i >= 0; i--) {
+    const exp = scoreExplosions[i];
+    exp.timer += deltaTime;
+    // Animate particles
+    for (const p of exp.particles) {
+      p.x += p.vx * deltaTime;
+      p.y += p.vy * deltaTime;
+      p.alpha -= deltaTime / exp.duration;
+    }
+    if (exp.timer > exp.duration) {
+      scoreExplosions.splice(i, 1);
+    }
+  }
 }
 
 // --- Update drawCacti and updateCacti for responsive ---
@@ -729,6 +870,7 @@ evilDax1Image.onload = checkAllAssetsLoaded;
 evilDax2Image.onload = checkAllAssetsLoaded;
 dinoDax1Image.onload = checkAllAssetsLoaded;
 dinoDax2Image.onload = checkAllAssetsLoaded;
+swagRunTitleImage.onload = checkAllAssetsLoaded;
 
 // In case images are already cached
 if (skyImage.complete) checkAllAssetsLoaded();
@@ -747,11 +889,21 @@ if (evilDax1Image.complete) checkAllAssetsLoaded();
 if (evilDax2Image.complete) checkAllAssetsLoaded();
 if (dinoDax1Image.complete) checkAllAssetsLoaded();
 if (dinoDax2Image.complete) checkAllAssetsLoaded();
+if (swagRunTitleImage.complete) checkAllAssetsLoaded();
+
+// Start the game loop immediately so READY overlay is always visible
+requestAnimationFrame(gameLoop);
 
 // Game loop
 function gameLoop(timestamp) {
   const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
   lastTimestamp = timestamp;
+
+  if (gameState === 'READY') {
+    readyPulseTimer += deltaTime;
+  } else {
+    readyPulseTimer = 0;
+  }
 
   update(deltaTime);  // pass deltaTime to update
   init();             // draw
@@ -761,9 +913,6 @@ function gameLoop(timestamp) {
 // Resize canvas on load and when window resizes
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
-
-// Start the game loop
-gameLoop();
 
 function getRandomCactusTime() {
   // Return a random time between 1.4 and 3.4 seconds
@@ -822,3 +971,10 @@ function getDinoDaxHitbox() {
 window.setScoreForTesting = function(newScore) {
   score = newScore;
 };
+
+// --- Score explosion animation state ---
+let scoreExplosions = [];
+const SCORE_EXPLOSION_DURATION = 1.1; // seconds
+const SCORE_EXPLOSION_PARTICLES = 24;
+const SCORE_EXPLOSION_COLORS = ['#ffe600', '#ffb347', '#6ee7b7', '#60a5fa', '#f472b6', '#fff', '#fbbf24'];
+let lastExplosionScore = 0;
