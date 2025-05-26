@@ -16,6 +16,31 @@ const DINO_STAND_HEIGHT = 94;
 const DINO_DUCK_HEIGHT = 56;
 const TARPIT_Y_OFFSET = 50; // Adjust as needed for visual alignment
 
+// --- Audio Context ---
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+function playJumpSound() {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  // Set up the sound
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(400, audioContext.currentTime); // Start at 400Hz
+  oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1); // Rise to 800Hz
+  
+  // Set up the volume envelope
+  gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+  
+  // Start and stop the sound
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.2);
+}
+
 // --- Game State Variables ---
 let lastTimestamp = performance.now();
 let score = 0; 
@@ -944,6 +969,7 @@ document.addEventListener('keydown', function(event) {
       isJumping = true;
       jumpVelocity = INITIAL_JUMP_VELOCITY;  // Reset to initial velocity
       initialY = getGroundTopY() - DINO_STAND_HEIGHT + GROUND_OVERLAP;
+      playJumpSound(); // Play jump sound
     } else if (gameState === 'LOSE') {
       resetGame();
     }
