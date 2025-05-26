@@ -54,7 +54,6 @@ let initialY = 0;
 let cacti = [];
 let cactusTimer = 0;
 let nextCactusTime = getRandomCactusTime();
-let isCactusRateHalved = false;
 let cactusGenerationPaused = false;
 let evilDaxes = [];
 let evilDaxNextSpawnDelay = null;
@@ -535,7 +534,6 @@ function update(deltaTime) {
         i--;
         tarpitActive = false;
         nextTarpitScore += 4500;
-        isCactusRateHalved = false;
         cactusTimer = 0;
         nextCactusTime = getRandomCactusTime();
         evilDaxNextSpawnDelay = null;
@@ -546,10 +544,8 @@ function update(deltaTime) {
       }
     }
   }
-  // Pause cactus generation 300 points before tarpit event, during tarpit, or while evilDaxNextSpawnDelay !== null
-  if ((score >= nextTarpitScore - 300 && score < nextTarpitScore) || tarpitActive) {
-    cactusGenerationPaused = true;
-  } else if (evilDaxNextSpawnDelay !== null) {
+  // Pause cactus generation 300 points before tarpit event, during tarpit, or while evil dax is spawning
+  if ((score >= nextTarpitScore - 300 && score < nextTarpitScore) || tarpitActive || evilDaxNextSpawnDelay !== null) {
     cactusGenerationPaused = true;
   } else {
     cactusGenerationPaused = false;
@@ -565,10 +561,9 @@ function update(deltaTime) {
     tarpitActive = true;
     // Pause evil dax generation
     evilDaxNextSpawnDelay = null;
-    isCactusRateHalved = false;
   }
-  // Good dax spawns 200 points after tarpit event
-  if (tarpitActive && !goodDax && !goodDaxUsed && Math.floor(score) >= nextTarpitScore - 4300) {
+  // Good dax spawns after tarpit event
+  if (tarpitActive && !goodDax && !goodDaxUsed) {
     goodDax = {
       x: -100,
       y: getGroundTopY() - 200,
@@ -653,8 +648,9 @@ function update(deltaTime) {
     // Evil-dax logic (skip if tarpitActive)
     if (!tarpitActive && score >= 1500 && Math.floor(score) >= nextEvilDaxScore) {
       if (evilDaxNextSpawnDelay === null) {
-        evilDaxNextSpawnDelay = Math.random() * 1 + 3;  // Random delay between 3-4 seconds
+        evilDaxNextSpawnDelay = 4;  // Fixed 4 second delay
         evilDaxSpawnTimer = 0;
+        cactusGenerationPaused = true;  // Pause cactus generation when evil dax starts spawning
       }
       evilDaxSpawnTimer += deltaTime;
       if (evilDaxSpawnTimer >= evilDaxNextSpawnDelay) {
@@ -662,6 +658,7 @@ function update(deltaTime) {
         nextEvilDaxScore += 1500;
         evilDaxNextSpawnDelay = null;
         evilDaxSpawnTimer = 0;
+        cactusGenerationPaused = false;  // Resume cactus generation after evil dax spawns
       }
     }
     updateEvilDaxes(deltaTime, effectiveSpeed * 2);
@@ -685,7 +682,7 @@ function update(deltaTime) {
   // --- Dino-dax ride logic ---
   if (isRidingDax) {
     // Double game speed
-    const rideSpeedMultiplier = 2;
+    currentScrollSpeed = scrollSpeedPerSecond * 2;
     // Animate dino-dax
     dinoDaxAnimationTimer += deltaTime;
     if (dinoDaxAnimationTimer >= animationInterval) {
@@ -939,7 +936,6 @@ function resetGame() {
   goodDax = null;
   tarpitActive = false;
   nextTarpitScore = 4500;
-  isCactusRateHalved = false;
   isRidingDax = false;
   rideStartScore = 0;
   dinoDaxSpriteIndex = 0;
@@ -949,7 +945,7 @@ function resetGame() {
   dinoDaxPos = null;
   goodDaxUsed = false;
   currentScrollSpeed = scrollSpeedPerSecond;
-  nextSpeedupScore = 2050;
+  nextSpeedupScore = 2000;
 }
 
 // Event listeners
@@ -1135,4 +1131,4 @@ const FASTER_TEXT_DURATION = 0.8; // seconds
 const FASTER_TEXT_COLORS = ['#ff0000', '#ff6b6b', '#ff9e9e'];
 
 let currentScrollSpeed = scrollSpeedPerSecond;
-let nextSpeedupScore = 2050;
+let nextSpeedupScore = 2000;
