@@ -262,7 +262,10 @@ function init() {
   ctx.font = `bold ${Math.floor(cssHeight * 0.07)}px Fira Mono, Consolas, 'Courier New'`;
   ctx.textAlign = 'right';
   const scoreString = Math.floor(score).toString().padStart(7, '0');
-  ctx.fillText(scoreString, cssWidth - 100, 60 * (cssHeight / BASE_GAME_HEIGHT));
+  // Place score with margin from top and right
+  const scoreMarginRight = cssWidth * 0.04;
+  const scoreMarginTop = cssHeight * 0.06;
+  ctx.fillText(scoreString, cssWidth - scoreMarginRight, scoreMarginTop);
 
   // --- READY STATE: Draw swag-run-title and animated text ---
   if (gameState === 'READY') {
@@ -290,7 +293,9 @@ function init() {
     const pre = 'PRESS ';
     const space = 'SPACE';
     const post = ' TO START';
-    const y = titleY + titleDrawHeight + 100;
+    // Neatly center below swag-run-title
+    const spaceBelowTitle = cssHeight * 0.1;
+    const y = titleY + titleDrawHeight + spaceBelowTitle;
     // Measure widths
     const preWidth = ctx.measureText(pre).width;
     const spaceWidth = ctx.measureText(space).width;
@@ -306,6 +311,16 @@ function init() {
     // Draw ' TO START'
     ctx.fillStyle = 'white';
     ctx.fillText(post, startX + preWidth + spaceWidth, y);
+    // Draw instructional text in bottom left in READY state
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.font = `bold ${Math.floor(cssHeight * 0.045)}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    const instructions = 'Jump: [space] / [↑]    Duck: [↓]';
+    const marginLeft = cssWidth * 0.03;
+    const marginBottom = cssHeight * 0.04;
+    ctx.fillText(instructions, marginLeft, cssHeight - marginBottom);
+    ctx.restore();
     return; // Don't draw other overlays in READY
   }
 
@@ -394,6 +409,17 @@ function init() {
       ctx.restore();
     }
   }
+
+  // Draw instructional text in bottom left in all game states
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.font = `bold ${Math.floor(cssHeight * 0.045)}px 'Basic Sans', Arial, sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  const instructions = 'Jump: [space] / [↑]    Duck: [↓]';
+  const marginLeft = cssWidth * 0.03;
+  const marginBottom = cssHeight * 0.04;
+  ctx.fillText(instructions, marginLeft, cssHeight - marginBottom);
+  ctx.restore();
 }
 
 // --- Update update() for responsive movement ---
