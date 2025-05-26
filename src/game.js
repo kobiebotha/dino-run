@@ -30,6 +30,7 @@ let cacti = [];
 let cactusTimer = 0;
 let nextCactusTime = getRandomCactusTime();
 let isCactusRateHalved = false;
+let cactusGenerationPaused = false;
 let evilDaxes = [];
 let evilDaxNextSpawnDelay = null;
 let evilDaxSpawnTimer = 0;
@@ -437,9 +438,13 @@ function update(deltaTime) {
       }
     }
   }
-  // Pause cactus generation 300 points before tarpit event
-  if (score >= nextTarpitScore - 300 && score < nextTarpitScore) {
-    isCactusRateHalved = true; // Use this flag to pause cactus generation
+  // Pause cactus generation 300 points before tarpit event, during tarpit, or while evilDaxNextSpawnDelay !== null
+  if ((score >= nextTarpitScore - 300 && score < nextTarpitScore) || tarpitActive) {
+    cactusGenerationPaused = true;
+  } else if (evilDaxNextSpawnDelay !== null) {
+    cactusGenerationPaused = true;
+  } else {
+    cactusGenerationPaused = false;
   }
   // Spawn tarpit at multiples of 4500
   if (!tarpitActive && Math.floor(score) >= nextTarpitScore) {
@@ -528,12 +533,12 @@ function update(deltaTime) {
     if (sky.x <= -sky.width) sky.x = skyClone.x + skyClone.width;
     if (skyClone.x <= -skyClone.width) skyClone.x = sky.x + sky.width;
     // Update cactus timer (skip if tarpitActive or isCactusRateHalved)
-    if (!tarpitActive && !isCactusRateHalved) {
+    if (!cactusGenerationPaused) {
       cactusTimer += deltaTime;
       if (cactusTimer >= nextCactusTime) {
         generateCactus();
         cactusTimer = 0;
-        nextCactusTime = getRandomCactusTime() * (isCactusRateHalved ? 2 : 1);
+        nextCactusTime = getRandomCactusTime();
       }
     }
     updateCacti(deltaTime, effectiveSpeed);
