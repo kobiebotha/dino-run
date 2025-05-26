@@ -410,6 +410,37 @@ function init() {
     }
   }
 
+  // Draw faster text animations
+  for (const anim of fasterTextAnimations) {
+    const t = anim.timer / anim.duration;
+    const scale = 1 + 2 * t;
+    const alpha = 1 - t;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `bold ${Math.floor(cssHeight * 0.15)}px 'Basic Sans', Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.translate(cssWidth / 2, cssHeight / 2);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#ff0000';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 8;
+    ctx.strokeText(anim.text, 0, 0);
+    ctx.fillText(anim.text, 0, 0);
+    ctx.restore();
+    
+    // Draw particles
+    for (const p of anim.particles) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(cssWidth / 2 + p.x, cssHeight / 2 + p.y, p.radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
   // Draw instructional text in bottom left in all game states
   ctx.save();
   ctx.textAlign = 'left';
@@ -424,7 +455,33 @@ function init() {
 
 // --- Update update() for responsive movement ---
 function update(deltaTime) {
-  const effectiveSpeed = scrollSpeedPerSecond * deltaTime;
+  // Increase speed by 20% every (2000n + 50) points
+  if (score >= nextSpeedupScore) {
+    currentScrollSpeed *= 1.2;
+    nextSpeedupScore += 2000;
+    
+    // Create faster text animation
+    const particles = [];
+    for (let i = 0; i < 12; i++) {
+      const angle = (2 * Math.PI * i) / 12;
+      const speed = 120 + Math.random() * 60;
+      particles.push({
+        x: 0, y: 0,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        color: FASTER_TEXT_COLORS[i % FASTER_TEXT_COLORS.length],
+        radius: 6 + Math.random() * 4
+      });
+    }
+    fasterTextAnimations.push({
+      text: 'FASTER!',
+      timer: 0,
+      duration: FASTER_TEXT_DURATION,
+      particles
+    });
+  }
+  const effectiveSpeed = currentScrollSpeed * deltaTime;
   if (window.DEBUG_SPEED) {
     console.log({
       cssWidth,
@@ -719,6 +776,21 @@ function update(deltaTime) {
       scoreExplosions.splice(i, 1);
     }
   }
+
+  // --- Animate faster text ---
+  for (let i = fasterTextAnimations.length - 1; i >= 0; i--) {
+    const anim = fasterTextAnimations[i];
+    anim.timer += deltaTime;
+    // Animate particles
+    for (const p of anim.particles) {
+      p.x += p.vx * deltaTime;
+      p.y += p.vy * deltaTime;
+      p.alpha -= deltaTime / anim.duration;
+    }
+    if (anim.timer > anim.duration) {
+      fasterTextAnimations.splice(i, 1);
+    }
+  }
 }
 
 // --- Update drawCacti and updateCacti for responsive ---
@@ -851,6 +923,8 @@ function resetGame() {
   flyingDax = null;
   dinoDaxPos = null;
   goodDaxUsed = false;
+  currentScrollSpeed = scrollSpeedPerSecond;
+  nextSpeedupScore = 2050;
 }
 
 // Event listeners
@@ -1028,3 +1102,11 @@ const SCORE_EXPLOSION_DURATION = 1.1; // seconds
 const SCORE_EXPLOSION_PARTICLES = 24;
 const SCORE_EXPLOSION_COLORS = ['#ffe600', '#ffb347', '#6ee7b7', '#60a5fa', '#f472b6', '#fff', '#fbbf24'];
 let lastExplosionScore = 0;
+
+// --- Faster text animation state ---
+let fasterTextAnimations = [];
+const FASTER_TEXT_DURATION = 0.8; // seconds
+const FASTER_TEXT_COLORS = ['#ff0000', '#ff6b6b', '#ff9e9e'];
+
+let currentScrollSpeed = scrollSpeedPerSecond;
+let nextSpeedupScore = 2050;
