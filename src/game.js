@@ -28,8 +28,8 @@ function playJumpSound() {
   
   // Set up the sound
   oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(400, audioContext.currentTime); // Start at 400Hz
-  oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1); // Rise to 800Hz
+  oscillator.frequency.setValueAtTime(200, audioContext.currentTime); // Start at 200Hz
+  oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1); // Rise to 400Hz
   
   // Set up the volume envelope
   gainNode.gain.setValueAtTime(0, audioContext.currentTime);
@@ -653,7 +653,7 @@ function update(deltaTime) {
     // Evil-dax logic (skip if tarpitActive)
     if (!tarpitActive && score >= 1500 && Math.floor(score) >= nextEvilDaxScore) {
       if (evilDaxNextSpawnDelay === null) {
-        evilDaxNextSpawnDelay = Math.random() * 7 + 3;
+        evilDaxNextSpawnDelay = Math.random() * 1 + 3;  // Random delay between 3-4 seconds
         evilDaxSpawnTimer = 0;
       }
       evilDaxSpawnTimer += deltaTime;
