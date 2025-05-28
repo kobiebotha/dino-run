@@ -39,3 +39,11 @@ canvas {
   background: #f7f7f7;
   /* No width/height set here! */
 }
+
+#leaderboard {
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}

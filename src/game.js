@@ -1,3 +1,7 @@
+import { addEntry, drawLeaderboard } from "./leaderboard.js";
+
+drawLeaderboard();
+
 // --- Constants ---
 const BASE_GAME_WIDTH = 1205;
 const BASE_GAME_HEIGHT = 678;
@@ -22,20 +26,26 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 function playJumpSound() {
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
-  
+
   oscillator.connect(gainNode);
   gainNode.connect(audioContext.destination);
-  
+
   // Set up the sound
-  oscillator.type = 'sine';
+  oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(200, audioContext.currentTime); // Start at 200Hz
-  oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1); // Rise to 400Hz
-  
+  oscillator.frequency.exponentialRampToValueAtTime(
+    400,
+    audioContext.currentTime + 0.1
+  ); // Rise to 400Hz
+
   // Set up the volume envelope
   gainNode.gain.setValueAtTime(0, audioContext.currentTime);
   gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-  
+  gainNode.gain.exponentialRampToValueAtTime(
+    0.01,
+    audioContext.currentTime + 0.2
+  );
+
   // Start and stop the sound
   oscillator.start();
   oscillator.stop(audioContext.currentTime + 0.2);
@@ -43,8 +53,8 @@ function playJumpSound() {
 
 // --- Game State Variables ---
 let lastTimestamp = performance.now();
-let score = 0; 
-let gameState = 'READY'; // 'READY', 'PLAYING', or 'LOSE'
+let score = 0;
+let gameState = "READY"; // 'READY', 'PLAYING', or 'LOSE'
 let isDucking = false;
 let animationTimer = 0;
 let dinoSpriteIndex = 0;
@@ -81,8 +91,8 @@ let cssHeight = 0;
 let keysDown = {};
 
 // --- Asset Loading ---
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
 const dinoHitboxPadding = { top: 10, bottom: 5, left: 22, right: 14 };
 const dinoDuckHitboxPadding = { top: 5, bottom: 2, left: 10, right: 10 };
@@ -90,53 +100,53 @@ const cactusHitboxPadding = { top: 5, bottom: 0, left: 12, right: 12 };
 const evilDaxHitboxPadding = { top: 10, bottom: 10, left: 20, right: 20 };
 
 const skyImage = new Image();
-skyImage.src = 'assets/sky.svg';
+skyImage.src = "assets/sky.svg";
 const groundImage = new Image();
-groundImage.src = 'assets/ground.svg';
+groundImage.src = "assets/ground.svg";
 const dinoStandingImage = new Image();
-dinoStandingImage.src = 'assets/dino-standing.svg';
+dinoStandingImage.src = "assets/dino-standing.svg";
 const dinoLeftLegImage = new Image();
-dinoLeftLegImage.src = 'assets/dino-left-leg.svg';
+dinoLeftLegImage.src = "assets/dino-left-leg.svg";
 const dinoRightLegImage = new Image();
-dinoRightLegImage.src = 'assets/dino-right-leg.svg';
+dinoRightLegImage.src = "assets/dino-right-leg.svg";
 const dinoDeadImage = new Image();
-dinoDeadImage.src = 'assets/dino-dead.svg';
+dinoDeadImage.src = "assets/dino-dead.svg";
 const dinoDuckLeftLegImage = new Image();
-dinoDuckLeftLegImage.src = 'assets/dino-duck-left-leg.svg';
+dinoDuckLeftLegImage.src = "assets/dino-duck-left-leg.svg";
 const dinoDuckRightLegImage = new Image();
-dinoDuckRightLegImage.src = 'assets/dino-duck-right-leg.svg';
+dinoDuckRightLegImage.src = "assets/dino-duck-right-leg.svg";
 const cactusImages = [
   { img: new Image(), weight: 1.5 },
   { img: new Image(), weight: 1.5 },
   { img: new Image(), weight: 1 },
-  { img: new Image(), weight: 1 }
+  { img: new Image(), weight: 1 },
 ];
-cactusImages[0].img.src = 'assets/cactus1.svg';
-cactusImages[1].img.src = 'assets/cactus2.svg';
-cactusImages[2].img.src = 'assets/cactus-pair.svg';
-cactusImages[3].img.src = 'assets/cactus-trio.svg';
+cactusImages[0].img.src = "assets/cactus1.svg";
+cactusImages[1].img.src = "assets/cactus2.svg";
+cactusImages[2].img.src = "assets/cactus-pair.svg";
+cactusImages[3].img.src = "assets/cactus-trio.svg";
 const evilDax1Image = new Image();
-evilDax1Image.src = 'assets/evil-dax1.svg';
+evilDax1Image.src = "assets/evil-dax1.svg";
 const evilDax2Image = new Image();
-evilDax2Image.src = 'assets/evil-dax2.svg';
+evilDax2Image.src = "assets/evil-dax2.svg";
 
 // Tarpit and good dax assets
 const tarpitImage = new Image();
-tarpitImage.src = 'assets/tarpit.svg';
+tarpitImage.src = "assets/tarpit.svg";
 const goodDax1Image = new Image();
-goodDax1Image.src = 'assets/dax1.svg';
+goodDax1Image.src = "assets/dax1.svg";
 const goodDax2Image = new Image();
-goodDax2Image.src = 'assets/dax2.svg';
+goodDax2Image.src = "assets/dax2.svg";
 
 // Asset loading for dino-dax
 const dinoDax1Image = new Image();
-dinoDax1Image.src = 'assets/dino-dax1.svg';
+dinoDax1Image.src = "assets/dino-dax1.svg";
 const dinoDax2Image = new Image();
-dinoDax2Image.src = 'assets/dino-dax2.svg';
+dinoDax2Image.src = "assets/dino-dax2.svg";
 
 // Asset loading for swag-run-title
 const swagRunTitleImage = new Image();
-swagRunTitleImage.src = 'assets/swag-run-title.svg';
+swagRunTitleImage.src = "assets/swag-run-title.svg";
 
 // --- Animation state for title and text ---
 let readyPulseTimer = 0;
@@ -145,28 +155,51 @@ const SWAG_TITLE_WIDTH = 566;
 const SWAG_TITLE_HEIGHT = 329;
 const TITLE_SCALE_MIN = 0.92;
 const TITLE_SCALE_MAX = 1.08;
-const TITLE_PULSE_SPEED = 2 * Math.PI / 2; // 1 pulse per second
-const SPACE_COLORS = ['#ffe600', '#ffb347', '#6ee7b7', '#60a5fa', '#f472b6'];
+const TITLE_PULSE_SPEED = (2 * Math.PI) / 2; // 1 pulse per second
+const SPACE_COLORS = ["#ffe600", "#ffb347", "#6ee7b7", "#60a5fa", "#f472b6"];
 
 // --- Store all positions in virtual coordinates (base size) ---
-let dino = { x: 40, y: getGroundTopY() - DINO_STAND_HEIGHT + GROUND_OVERLAP, width: 88, height: DINO_STAND_HEIGHT };
+let dino = {
+  x: 40,
+  y: getGroundTopY() - DINO_STAND_HEIGHT + GROUND_OVERLAP,
+  width: 88,
+  height: DINO_STAND_HEIGHT,
+};
 let ground = { x: 0, y: getGroundTopY(), width: BASE_GAME_WIDTH, height: 256 };
-let groundClone = { x: BASE_GAME_WIDTH, y: getGroundTopY(), width: BASE_GAME_WIDTH, height: 256 };
+let groundClone = {
+  x: BASE_GAME_WIDTH,
+  y: getGroundTopY(),
+  width: BASE_GAME_WIDTH,
+  height: 256,
+};
 let sky = { x: 0, y: 0, width: BASE_GAME_WIDTH, height: 471 };
-let skyClone = { x: BASE_GAME_WIDTH, y: 0, width: BASE_GAME_WIDTH, height: 471 };
+let skyClone = {
+  x: BASE_GAME_WIDTH,
+  y: 0,
+  width: BASE_GAME_WIDTH,
+  height: 471,
+};
 
 // --- Drawing helpers: convert virtual to pixel (using CSS size) ---
-function toPxX(x) { return x * cssWidth / BASE_GAME_WIDTH; }
-function toPxY(y) { return y * cssHeight / BASE_GAME_HEIGHT; }
-function toPxW(w) { return w * cssWidth / BASE_GAME_WIDTH; }
-function toPxH(h) { return h * cssHeight / BASE_GAME_HEIGHT; }
+function toPxX(x) {
+  return (x * cssWidth) / BASE_GAME_WIDTH;
+}
+function toPxY(y) {
+  return (y * cssHeight) / BASE_GAME_HEIGHT;
+}
+function toPxW(w) {
+  return (w * cssWidth) / BASE_GAME_WIDTH;
+}
+function toPxH(h) {
+  return (h * cssHeight) / BASE_GAME_HEIGHT;
+}
 
 // --- Update resizeCanvas to store CSS size ---
 function resizeCanvas() {
   const aspect = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
   // Subtract margin from available space
-  const marginW = window.innerWidth * 0.10; // 5vw left + 5vw right
-  const marginH = window.innerHeight * 0.10; // 5vh top + 5vh bottom
+  const marginW = window.innerWidth * 0.1; // 5vw left + 5vw right
+  const marginH = window.innerHeight * 0.1; // 5vh top + 5vh bottom
   let width = window.innerWidth - marginW;
   let height = window.innerHeight - marginH;
   if (width / height > aspect) {
@@ -176,8 +209,8 @@ function resizeCanvas() {
   }
   cssWidth = width;
   cssHeight = height;
-  canvas.style.width = cssWidth + 'px';
-  canvas.style.height = cssHeight + 'px';
+  canvas.style.width = cssWidth + "px";
+  canvas.style.height = cssHeight + "px";
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(cssWidth * dpr);
   canvas.height = Math.round(cssHeight * dpr);
@@ -188,7 +221,7 @@ function resizeCanvas() {
 // --- Update init() to use virtual coordinates and convert to pixels for drawing ---
 function init() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#f7f7f7';
+  ctx.fillStyle = "#f7f7f7";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw sky - original and clone
@@ -228,16 +261,28 @@ function init() {
   }
 
   // Draw cacti
-  cacti.forEach(cactus => {
+  cacti.forEach((cactus) => {
     if (cactus.image.complete) {
-      ctx.drawImage(cactus.image, toPxX(cactus.x), toPxY(cactus.y), toPxW(cactus.width), toPxH(cactus.height));
+      ctx.drawImage(
+        cactus.image,
+        toPxX(cactus.x),
+        toPxY(cactus.y),
+        toPxW(cactus.width),
+        toPxH(cactus.height)
+      );
     }
   });
 
   // Draw dino-dax if riding
   if (isRidingDax && dinoDaxPos) {
     const img = dinoDaxSpriteIndex === 0 ? dinoDax1Image : dinoDax2Image;
-    ctx.drawImage(img, toPxX(dinoDaxPos.x), toPxY(dinoDaxPos.y), toPxW(img.width), toPxH(img.height));
+    ctx.drawImage(
+      img,
+      toPxX(dinoDaxPos.x),
+      toPxY(dinoDaxPos.y),
+      toPxW(img.width),
+      toPxH(img.height)
+    );
   } else {
     // Draw regular dino if not riding and not falling
     if (!fallingDino) {
@@ -249,12 +294,27 @@ function init() {
         dinoDuckLeftLegImage.complete &&
         dinoDuckRightLegImage.complete
       ) {
-        if (gameState === 'LOSE') {
-          ctx.drawImage(dinoDeadImage, toPxX(dino.x), toPxY(dino.y), toPxW(dino.width), toPxH(dino.height));
-        } else if (gameState === 'READY' || isJumping) {
-          ctx.drawImage(dinoStandingImage, toPxX(dino.x), toPxY(dino.y), toPxW(dino.width), toPxH(dino.height));
+        if (gameState === "LOSE") {
+          ctx.drawImage(
+            dinoDeadImage,
+            toPxX(dino.x),
+            toPxY(dino.y),
+            toPxW(dino.width),
+            toPxH(dino.height)
+          );
+        } else if (gameState === "READY" || isJumping) {
+          ctx.drawImage(
+            dinoStandingImage,
+            toPxX(dino.x),
+            toPxY(dino.y),
+            toPxW(dino.width),
+            toPxH(dino.height)
+          );
         } else if (isDucking) {
-          const currentDuckImage = dinoSpriteIndex === 0 ? dinoDuckLeftLegImage : dinoDuckRightLegImage;
+          const currentDuckImage =
+            dinoSpriteIndex === 0
+              ? dinoDuckLeftLegImage
+              : dinoDuckRightLegImage;
           ctx.drawImage(
             currentDuckImage,
             toPxX(dino.x),
@@ -263,8 +323,15 @@ function init() {
             toPxH(DINO_DUCK_HEIGHT)
           );
         } else {
-          const currentDinoImage = dinoSpriteIndex === 0 ? dinoLeftLegImage : dinoRightLegImage;
-          ctx.drawImage(currentDinoImage, toPxX(dino.x), toPxY(dino.y), toPxW(dino.width), toPxH(dino.height));
+          const currentDinoImage =
+            dinoSpriteIndex === 0 ? dinoLeftLegImage : dinoRightLegImage;
+          ctx.drawImage(
+            currentDinoImage,
+            toPxX(dino.x),
+            toPxY(dino.y),
+            toPxW(dino.width),
+            toPxH(dino.height)
+          );
         }
       }
     }
@@ -282,41 +349,53 @@ function init() {
   }
 
   // Draw score as 7-digit zero-padded number
-  ctx.fillStyle = 'yellow';
-  ctx.font = `bold ${Math.floor(cssHeight * 0.07)}px Fira Mono, Consolas, 'Courier New'`;
-  ctx.textAlign = 'right';
-  const scoreString = Math.floor(score).toString().padStart(7, '0');
+  ctx.fillStyle = "yellow";
+  ctx.font = `bold ${Math.floor(
+    cssHeight * 0.07
+  )}px Fira Mono, Consolas, 'Courier New'`;
+  ctx.textAlign = "right";
+  const scoreString = Math.floor(score).toString().padStart(7, "0");
   // Place score with margin from top and right
   const scoreMarginRight = cssWidth * 0.04;
   const scoreMarginTop = cssHeight * 0.06;
   ctx.fillText(scoreString, cssWidth - scoreMarginRight, scoreMarginTop);
 
   // --- READY STATE: Draw swag-run-title and animated text ---
-  if (gameState === 'READY') {
+  if (gameState === "READY") {
     // Pulse calculation
     const pulse = (Math.sin(readyPulseTimer * TITLE_PULSE_SPEED) + 1) / 2; // 0..1
     const scale = TITLE_SCALE_MIN + (TITLE_SCALE_MAX - TITLE_SCALE_MIN) * pulse;
     // Centered position
-    const titleDrawWidth = SWAG_TITLE_WIDTH * scale * (cssWidth / BASE_GAME_WIDTH);
-    const titleDrawHeight = SWAG_TITLE_HEIGHT * scale * (cssHeight / BASE_GAME_HEIGHT);
+    const titleDrawWidth =
+      SWAG_TITLE_WIDTH * scale * (cssWidth / BASE_GAME_WIDTH);
+    const titleDrawHeight =
+      SWAG_TITLE_HEIGHT * scale * (cssHeight / BASE_GAME_HEIGHT);
     const titleX = (cssWidth - titleDrawWidth) / 2;
     const titleY = (cssHeight - titleDrawHeight) / 2 - 60;
     // Only draw the image if loaded
     if (swagRunTitleImage.complete && swagRunTitleImage.naturalWidth > 0) {
       ctx.save();
-      ctx.drawImage(swagRunTitleImage, titleX, titleY, titleDrawWidth, titleDrawHeight);
+      ctx.drawImage(
+        swagRunTitleImage,
+        titleX,
+        titleY,
+        titleDrawWidth,
+        titleDrawHeight
+      );
       ctx.restore();
     }
     // Animated 'PRESS SPACE TO START' text (always draw)
-    ctx.textAlign = 'left';
-    ctx.font = `bold ${Math.floor(cssHeight * 0.065)}px 'Basic Sans', Arial, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.font = `bold ${Math.floor(
+      cssHeight * 0.065
+    )}px 'Basic Sans', Arial, sans-serif`;
     // Color for 'SPACE'
     const colorIndex = Math.floor(pulse * (SPACE_COLORS.length - 1));
     const spaceColor = SPACE_COLORS[colorIndex];
     // Split and measure text
-    const pre = 'PRESS ';
-    const space = 'SPACE';
-    const post = ' TO START';
+    const pre = "PRESS ";
+    const space = "SPACE";
+    const post = " TO START";
     // Neatly center below swag-run-title
     const spaceBelowTitle = cssHeight * 0.1;
     const y = titleY + titleDrawHeight + spaceBelowTitle;
@@ -327,20 +406,22 @@ function init() {
     const totalWidth = preWidth + spaceWidth + postWidth;
     const startX = cssWidth / 2 - totalWidth / 2;
     // Draw 'PRESS '
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
     ctx.fillText(pre, startX, y);
     // Draw 'SPACE' in color
     ctx.fillStyle = spaceColor;
     ctx.fillText(space, startX + preWidth, y);
     // Draw ' TO START'
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
     ctx.fillText(post, startX + preWidth + spaceWidth, y);
     // Draw instructional text in bottom left in READY state
     ctx.save();
-    ctx.textAlign = 'left';
-    ctx.font = `bold ${Math.floor(cssHeight * 0.045)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    const instructions = 'Jump: [space] / [↑]    Duck: [↓]';
+    ctx.textAlign = "left";
+    ctx.font = `bold ${Math.floor(
+      cssHeight * 0.045
+    )}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    const instructions = "Jump: [space] / [↑]    Duck: [↓]";
     const marginLeft = cssWidth * 0.03;
     const marginBottom = cssHeight * 0.04;
     ctx.fillText(instructions, marginLeft, cssHeight - marginBottom);
@@ -349,10 +430,10 @@ function init() {
   }
 
   // --- GAME OVER STATE: Auto-return to READY after 10s ---
-  if (gameState === 'LOSE') {
+  if (gameState === "LOSE") {
     gameOverTimer += 1 / 60; // Approximate, will be reset on state change
-    if (gameOverTimer >= 10) {
-      gameState = 'READY';
+    if (gameOverTimer >= 30) {
+      gameState = "READY";
       gameOverTimer = 0;
       return;
     }
@@ -361,29 +442,49 @@ function init() {
   }
 
   // Add text based on game state
-  ctx.textAlign = 'center';
-  if (gameState === 'READY') {
-    ctx.fillStyle = 'white';
-    ctx.font = `bold ${Math.floor(cssHeight * 0.065)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.fillText('PRESS SPACE TO START', cssWidth / 2, cssHeight / 2);
-  } else if (gameState === 'LOSE') {
-    ctx.fillStyle = 'white';
-    ctx.font = `bold ${Math.floor(cssHeight * 0.11)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.fillText('GAME OVER', cssWidth / 2, cssHeight / 2 - 40 * (cssHeight / BASE_GAME_HEIGHT));
-    ctx.font = `bold ${Math.floor(cssHeight * 0.05)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.fillText('Press space to play again', cssWidth / 2, cssHeight / 2 + 40 * (cssHeight / BASE_GAME_HEIGHT));
+  ctx.textAlign = "center";
+  if (gameState === "READY") {
+    ctx.fillStyle = "white";
+    ctx.font = `bold ${Math.floor(
+      cssHeight * 0.065
+    )}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillText("PRESS SPACE TO START", cssWidth / 2, cssHeight / 2);
+  } else if (gameState === "LOSE") {
+    ctx.fillStyle = "white";
+    ctx.font = `bold ${Math.floor(
+      cssHeight * 0.11
+    )}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillText(
+      "GAME OVER",
+      cssWidth / 2,
+      cssHeight / 2 - 40 * (cssHeight / BASE_GAME_HEIGHT)
+    );
+    ctx.font = `bold ${Math.floor(
+      cssHeight * 0.05
+    )}px 'Basic Sans', Arial, sans-serif`;
+    ctx.fillText(
+      "Press space to play again",
+      cssWidth / 2,
+      cssHeight / 2 + 40 * (cssHeight / BASE_GAME_HEIGHT)
+    );
   }
 
   // Draw evil-daxes
-  evilDaxes.forEach(dax => {
+  evilDaxes.forEach((dax) => {
     const img = dax.animationIndex === 0 ? evilDax1Image : evilDax2Image;
     if (img.complete) {
-      ctx.drawImage(img, toPxX(dax.x), toPxY(dax.y), toPxW(dax.width), toPxH(dax.height));
+      ctx.drawImage(
+        img,
+        toPxX(dax.x),
+        toPxY(dax.y),
+        toPxW(dax.width),
+        toPxH(dax.height)
+      );
     }
   });
 
   // Draw tarpits
-  tarpits.forEach(tarpit => {
+  tarpits.forEach((tarpit) => {
     if (tarpitImage.complete) {
       ctx.drawImage(
         tarpitImage,
@@ -397,11 +498,23 @@ function init() {
 
   // Draw falling dino and flying dax as needed
   if (fallingDino) {
-    ctx.drawImage(dinoStandingImage, toPxX(fallingDino.x), toPxY(fallingDino.y), toPxW(fallingDino.width), toPxH(fallingDino.height));
+    ctx.drawImage(
+      dinoStandingImage,
+      toPxX(fallingDino.x),
+      toPxY(fallingDino.y),
+      toPxW(fallingDino.width),
+      toPxH(fallingDino.height)
+    );
   }
   if (flyingDax) {
     const img = flyingDax.animationIndex === 0 ? goodDax1Image : goodDax2Image;
-    ctx.drawImage(img, toPxX(flyingDax.x), toPxY(flyingDax.y), toPxW(flyingDax.width), toPxH(flyingDax.height));
+    ctx.drawImage(
+      img,
+      toPxX(flyingDax.x),
+      toPxY(flyingDax.y),
+      toPxW(flyingDax.width),
+      toPxH(flyingDax.height)
+    );
   }
 
   // Draw score explosions
@@ -411,13 +524,15 @@ function init() {
     const alpha = 1 - t;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = `bold ${Math.floor(cssHeight * 0.13)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.floor(
+      cssHeight * 0.13
+    )}px 'Basic Sans', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.translate(cssWidth / 2, cssHeight / 2);
     ctx.scale(scale, scale);
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#222';
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#222";
     ctx.lineWidth = 8;
     ctx.strokeText(exp.value.toString(), 0, 0);
     ctx.fillText(exp.value.toString(), 0, 0);
@@ -428,7 +543,13 @@ function init() {
       ctx.globalAlpha = Math.max(0, p.alpha);
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(cssWidth / 2 + p.x, cssHeight / 2 + p.y, p.radius, 0, 2 * Math.PI);
+      ctx.arc(
+        cssWidth / 2 + p.x,
+        cssHeight / 2 + p.y,
+        p.radius,
+        0,
+        2 * Math.PI
+      );
       ctx.fill();
       ctx.restore();
     }
@@ -441,25 +562,33 @@ function init() {
     const alpha = 1 - t;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = `bold ${Math.floor(cssHeight * 0.15)}px 'Basic Sans', Arial, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.floor(
+      cssHeight * 0.15
+    )}px 'Basic Sans', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.translate(cssWidth / 2, cssHeight / 2);
     ctx.scale(scale, scale);
-    ctx.fillStyle = '#ff0000';
-    ctx.strokeStyle = '#fff';
+    ctx.fillStyle = "#ff0000";
+    ctx.strokeStyle = "#fff";
     ctx.lineWidth = 8;
     ctx.strokeText(anim.text, 0, 0);
     ctx.fillText(anim.text, 0, 0);
     ctx.restore();
-    
+
     // Draw particles
     for (const p of anim.particles) {
       ctx.save();
       ctx.globalAlpha = Math.max(0, p.alpha);
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(cssWidth / 2 + p.x, cssHeight / 2 + p.y, p.radius, 0, 2 * Math.PI);
+      ctx.arc(
+        cssWidth / 2 + p.x,
+        cssHeight / 2 + p.y,
+        p.radius,
+        0,
+        2 * Math.PI
+      );
       ctx.fill();
       ctx.restore();
     }
@@ -467,10 +596,12 @@ function init() {
 
   // Draw instructional text in bottom left in all game states
   ctx.save();
-  ctx.textAlign = 'left';
-  ctx.font = `bold ${Math.floor(cssHeight * 0.045)}px 'Basic Sans', Arial, sans-serif`;
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  const instructions = 'Jump: [space] / [↑]    Duck: [↓]';
+  ctx.textAlign = "left";
+  ctx.font = `bold ${Math.floor(
+    cssHeight * 0.045
+  )}px 'Basic Sans', Arial, sans-serif`;
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  const instructions = "Jump: [space] / [↑]    Duck: [↓]";
   const marginLeft = cssWidth * 0.03;
   const marginBottom = cssHeight * 0.04;
   ctx.fillText(instructions, marginLeft, cssHeight - marginBottom);
@@ -483,26 +614,27 @@ function update(deltaTime) {
   if (score >= nextSpeedupScore) {
     currentScrollSpeed *= 1.2;
     nextSpeedupScore += 2000;
-    
+
     // Create faster text animation
     const particles = [];
     for (let i = 0; i < 12; i++) {
       const angle = (2 * Math.PI * i) / 12;
       const speed = 120 + Math.random() * 60;
       particles.push({
-        x: 0, y: 0,
+        x: 0,
+        y: 0,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         alpha: 1,
         color: FASTER_TEXT_COLORS[i % FASTER_TEXT_COLORS.length],
-        radius: 6 + Math.random() * 4
+        radius: 6 + Math.random() * 4,
       });
     }
     fasterTextAnimations.push({
-      text: 'FASTER!',
+      text: "FASTER!",
       timer: 0,
       duration: FASTER_TEXT_DURATION,
-      particles
+      particles,
     });
   }
   const effectiveSpeed = currentScrollSpeed * deltaTime;
@@ -516,17 +648,20 @@ function update(deltaTime) {
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
       effectiveSpeed,
-      deltaTime
+      deltaTime,
     });
   }
   // --- Tarpit event logic ---
-  if (gameState === 'PLAYING') {
+  if (gameState === "PLAYING") {
     // Move tarpits
     for (let i = 0; i < tarpits.length; i++) {
       tarpits[i].x -= effectiveSpeed;
       // Collision with dino
-      if (!isRidingDax && checkAABBCollision(getCurrentDinoHitbox(), tarpits[i])) {
-        gameState = 'LOSE';
+      if (
+        !isRidingDax &&
+        checkAABBCollision(getCurrentDinoHitbox(), tarpits[i])
+      ) {
+        gameOver();
       }
       // Remove tarpit if off-canvas
       if (tarpits[i].x + tarpits[i].width < 0) {
@@ -545,7 +680,11 @@ function update(deltaTime) {
     }
   }
   // Pause cactus generation 300 points before tarpit event, during tarpit, or while evil dax is spawning
-  if ((score >= nextTarpitScore - 300 && score < nextTarpitScore) || tarpitActive || evilDaxNextSpawnDelay !== null) {
+  if (
+    (score >= nextTarpitScore - 300 && score < nextTarpitScore) ||
+    tarpitActive ||
+    evilDaxNextSpawnDelay !== null
+  ) {
     cactusGenerationPaused = true;
   } else {
     cactusGenerationPaused = false;
@@ -554,9 +693,10 @@ function update(deltaTime) {
   if (!tarpitActive && Math.floor(score) >= nextTarpitScore) {
     tarpits.push({
       x: BASE_GAME_WIDTH,
-      y: getGroundTopY() - tarpitImage.height + GROUND_OVERLAP + TARPIT_Y_OFFSET,
+      y:
+        getGroundTopY() - tarpitImage.height + GROUND_OVERLAP + TARPIT_Y_OFFSET,
       width: tarpitImage.width,
-      height: tarpitImage.height
+      height: tarpitImage.height,
     });
     tarpitActive = true;
     // Pause evil dax generation
@@ -573,7 +713,7 @@ function update(deltaTime) {
       hoverBaseY: getGroundTopY() - 200,
       hoverTime: 0,
       animationIndex: 0,
-      animationTimer: 0
+      animationTimer: 0,
     };
     goodDaxUsed = true;
   }
@@ -602,11 +742,11 @@ function update(deltaTime) {
     }
   }
   // --- Existing game logic ---
-  if (gameState === 'PLAYING') {
+  if (gameState === "PLAYING") {
     score += SCORE_PER_SECOND * deltaTime;
     if (isJumping) {
       const fastFallGravity = gravity * 9;
-      const currentGravity = keysDown['ArrowDown'] ? fastFallGravity : gravity;
+      const currentGravity = keysDown["ArrowDown"] ? fastFallGravity : gravity;
       jumpVelocity -= currentGravity * deltaTime;
       dino.y -= jumpVelocity * deltaTime;
       if (dino.y >= initialY) {
@@ -632,7 +772,8 @@ function update(deltaTime) {
     groundClone.x -= effectiveSpeed;
     skyClone.x -= effectiveSpeed;
     if (ground.x <= -ground.width) ground.x = groundClone.x + groundClone.width;
-    if (groundClone.x <= -groundClone.width) groundClone.x = ground.x + ground.width;
+    if (groundClone.x <= -groundClone.width)
+      groundClone.x = ground.x + ground.width;
     if (sky.x <= -sky.width) sky.x = skyClone.x + skyClone.width;
     if (skyClone.x <= -skyClone.width) skyClone.x = sky.x + sky.width;
     // Update cactus timer (skip if tarpitActive or isCactusRateHalved)
@@ -646,11 +787,15 @@ function update(deltaTime) {
     }
     updateCacti(deltaTime, effectiveSpeed);
     // Evil-dax logic (skip if tarpitActive)
-    if (!tarpitActive && score >= 1500 && Math.floor(score) >= nextEvilDaxScore) {
+    if (
+      !tarpitActive &&
+      score >= 1500 &&
+      Math.floor(score) >= nextEvilDaxScore
+    ) {
       if (evilDaxNextSpawnDelay === null) {
-        evilDaxNextSpawnDelay = 4;  // Fixed 4 second delay
+        evilDaxNextSpawnDelay = 4; // Fixed 4 second delay
         evilDaxSpawnTimer = 0;
-        cactusGenerationPaused = true;  // Pause cactus generation when evil dax starts spawning
+        cactusGenerationPaused = true; // Pause cactus generation when evil dax starts spawning
       }
       evilDaxSpawnTimer += deltaTime;
       if (evilDaxSpawnTimer >= evilDaxNextSpawnDelay) {
@@ -658,7 +803,7 @@ function update(deltaTime) {
         nextEvilDaxScore += 1500;
         evilDaxNextSpawnDelay = null;
         evilDaxSpawnTimer = 0;
-        cactusGenerationPaused = false;  // Resume cactus generation after evil dax spawns
+        cactusGenerationPaused = false; // Resume cactus generation after evil dax spawns
       }
     }
     updateEvilDaxes(deltaTime, effectiveSpeed * 2);
@@ -692,22 +837,32 @@ function update(deltaTime) {
     // Check for collisions with all obstacles
     const dinoDaxHitbox = getDinoDaxHitbox();
     for (let i = 0; i < cacti.length; i++) {
-      if (checkAABBCollision(dinoDaxHitbox, getRefinedHitbox(cacti[i], cactusHitboxPadding))) {
-        gameState = 'LOSE';
+      if (
+        checkAABBCollision(
+          dinoDaxHitbox,
+          getRefinedHitbox(cacti[i], cactusHitboxPadding)
+        )
+      ) {
+        gameOver();
       }
     }
     for (let i = 0; i < evilDaxes.length; i++) {
-      if (checkAABBCollision(dinoDaxHitbox, getRefinedHitbox(evilDaxes[i], evilDaxHitboxPadding))) {
-        gameState = 'LOSE';
+      if (
+        checkAABBCollision(
+          dinoDaxHitbox,
+          getRefinedHitbox(evilDaxes[i], evilDaxHitboxPadding)
+        )
+      ) {
+        gameOver();
       }
     }
     for (let i = 0; i < tarpits.length; i++) {
       if (checkAABBCollision(dinoDaxHitbox, tarpits[i])) {
-        gameState = 'LOSE';
+        gameOver();
       }
     }
     // End ride if down arrow pressed or score increased by 1000
-    if (keysDown['ArrowDown'] || Math.floor(score) >= rideStartScore + 1000) {
+    if (keysDown["ArrowDown"] || Math.floor(score) >= rideStartScore + 1000) {
       isRidingDax = false;
       dinoDaxPos = null;
       // Animate falling dino and flying dax
@@ -716,7 +871,7 @@ function update(deltaTime) {
         y: dinoDaxPos ? dinoDaxPos.y : dino.y,
         vy: 0,
         width: dino.width,
-        height: dino.height
+        height: dino.height,
       };
       flyingDax = {
         x: dinoDaxPos ? dinoDaxPos.x : dino.x,
@@ -726,7 +881,7 @@ function update(deltaTime) {
         width: goodDax1Image.width,
         height: goodDax1Image.height,
         animationIndex: 0,
-        animationTimer: 0
+        animationTimer: 0,
       };
     }
   }
@@ -734,7 +889,7 @@ function update(deltaTime) {
   if (fallingDino) {
     const fastFallGravity = gravity * 9;
     // Use fast gravity if down arrow is pressed
-    const currentGravity = keysDown['ArrowDown'] ? fastFallGravity : gravity;
+    const currentGravity = keysDown["ArrowDown"] ? fastFallGravity : gravity;
     fallingDino.vy += currentGravity * deltaTime;
     fallingDino.y += fallingDino.vy * deltaTime;
     const landingY = getGroundTopY() - DINO_STAND_HEIGHT + GROUND_OVERLAP;
@@ -769,19 +924,20 @@ function update(deltaTime) {
       const angle = (2 * Math.PI * i) / SCORE_EXPLOSION_PARTICLES;
       const speed = 180 + Math.random() * 80;
       particles.push({
-        x: 0, y: 0,
+        x: 0,
+        y: 0,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         alpha: 1,
         color: SCORE_EXPLOSION_COLORS[i % SCORE_EXPLOSION_COLORS.length],
-        radius: 8 + Math.random() * 6
+        radius: 8 + Math.random() * 6,
       });
     }
     scoreExplosions.push({
       value: roundedScore,
       timer: 0,
       duration: SCORE_EXPLOSION_DURATION,
-      particles
+      particles,
     });
   }
   // --- Animate score explosions ---
@@ -817,9 +973,15 @@ function update(deltaTime) {
 
 // --- Update drawCacti and updateCacti for responsive ---
 function drawCacti() {
-  cacti.forEach(cactus => {
+  cacti.forEach((cactus) => {
     if (cactus.image.complete) {
-      ctx.drawImage(cactus.image, toPxX(cactus.x), toPxY(cactus.y), toPxW(cactus.width), toPxH(cactus.height));
+      ctx.drawImage(
+        cactus.image,
+        toPxX(cactus.x),
+        toPxY(cactus.y),
+        toPxW(cactus.width),
+        toPxH(cactus.height)
+      );
     }
   });
 }
@@ -850,7 +1012,7 @@ function generateCactus() {
     y: getGroundTopY() - height + GROUND_OVERLAP,
     width,
     height,
-    image: selectedImage
+    image: selectedImage,
   };
   cacti.push(cactus);
 }
@@ -859,8 +1021,14 @@ function updateCacti(deltaTime, effectiveSpeed) {
   for (let i = 0; i < cacti.length; i++) {
     const cactus = cacti[i];
     cactus.x -= effectiveSpeed;
-    if (!isRidingDax && checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(cactus, cactusHitboxPadding))) {
-      gameState = 'LOSE';
+    if (
+      !isRidingDax &&
+      checkAABBCollision(
+        getCurrentDinoHitbox(),
+        getRefinedHitbox(cactus, cactusHitboxPadding)
+      )
+    ) {
+      gameOver();
     }
     if (cactus.x + cactus.width < 0) {
       cacti.splice(i, 1);
@@ -880,7 +1048,7 @@ function generateEvilDax() {
     height,
     animationIndex: 0,
     animationTimer: 0,
-    animationInterval: 0.2
+    animationInterval: 0.2,
   });
 }
 
@@ -893,8 +1061,14 @@ function updateEvilDaxes(deltaTime, evilDaxSpeed) {
       dax.animationTimer = 0;
       dax.animationIndex = dax.animationIndex === 0 ? 1 : 0;
     }
-    if (!isRidingDax && checkAABBCollision(getCurrentDinoHitbox(), getRefinedHitbox(dax, evilDaxHitboxPadding))) {
-      gameState = 'LOSE';
+    if (
+      !isRidingDax &&
+      checkAABBCollision(
+        getCurrentDinoHitbox(),
+        getRefinedHitbox(dax, evilDaxHitboxPadding)
+      )
+    ) {
+      gameOver();
     }
     if (dax.x + dax.width < 0) {
       evilDaxes.splice(i, 1);
@@ -910,7 +1084,7 @@ function getCurrentDinoHitbox() {
       x: dino.x,
       y: dino.y + (DINO_STAND_HEIGHT - DINO_DUCK_HEIGHT),
       width: 118,
-      height: DINO_DUCK_HEIGHT
+      height: DINO_DUCK_HEIGHT,
     };
     return getRefinedHitbox(rect, dinoDuckHitboxPadding);
   } else {
@@ -921,7 +1095,7 @@ function getCurrentDinoHitbox() {
 
 // --- Update resetGame for responsive ---
 function resetGame() {
-  gameState = 'PLAYING';
+  gameState = "PLAYING";
   cacti = [];
   cactusTimer = 0;
   nextCactusTime = getRandomCactusTime();
@@ -948,37 +1122,43 @@ function resetGame() {
   nextSpeedupScore = 2000;
 }
 
+async function gameOver() {
+  gameState = "LOSE";
+
+  await addEntry(score);
+}
+
 // Event listeners
-document.addEventListener('keydown', function(event) {
+document.addEventListener("keydown", function (event) {
   keysDown[event.code] = true;
-  if (event.code === 'Space' || event.code === 'ArrowUp') {
-    if (gameState === 'READY') {
-      gameState = 'PLAYING';
+  if (event.code === "Space" || event.code === "ArrowUp") {
+    if (gameState === "READY") {
+      gameState = "PLAYING";
       isRidingDax = false;
       rideStartScore = 0;
       dinoDaxSpriteIndex = 0;
       dinoDaxAnimationTimer = 0;
       fallingDino = null;
       flyingDax = null;
-    } else if (gameState === 'PLAYING' && !isJumping) {
+    } else if (gameState === "PLAYING" && !isJumping) {
       // Start jump if on the ground
       isJumping = true;
-      jumpVelocity = INITIAL_JUMP_VELOCITY;  // Reset to initial velocity
+      jumpVelocity = INITIAL_JUMP_VELOCITY; // Reset to initial velocity
       initialY = getGroundTopY() - DINO_STAND_HEIGHT + GROUND_OVERLAP;
       playJumpSound(); // Play jump sound
-    } else if (gameState === 'LOSE') {
+    } else if (gameState === "LOSE") {
       resetGame();
     }
-  } else if (event.code === 'ArrowDown') {
-    if (gameState === 'PLAYING' && !isJumping) {
+  } else if (event.code === "ArrowDown") {
+    if (gameState === "PLAYING" && !isJumping) {
       isDucking = true;
     }
   }
 });
 
-document.addEventListener('keyup', function(event) {
+document.addEventListener("keyup", function (event) {
   keysDown[event.code] = false;
-  if (event.code === 'ArrowDown') {
+  if (event.code === "ArrowDown") {
     isDucking = false;
   }
 });
@@ -1039,25 +1219,25 @@ window._frameCount = 0;
 function gameLoop(timestamp) {
   window._frameCount++;
   if (window._frameCount % 60 === 0) {
-    console.log('Frames in last second:', window._frameCount);
+    console.log("Frames in last second:", window._frameCount);
     window._frameCount = 0;
   }
   const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
   lastTimestamp = timestamp;
 
-  if (gameState === 'READY') {
+  if (gameState === "READY") {
     readyPulseTimer += deltaTime;
   } else {
     readyPulseTimer = 0;
   }
 
-  update(deltaTime);  // pass deltaTime to update
-  init();             // draw
+  update(deltaTime); // pass deltaTime to update
+  init(); // draw
   requestAnimationFrame(gameLoop);
 }
 
 // Resize canvas on load and when window resizes
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 function getRandomCactusTime() {
@@ -1077,8 +1257,14 @@ function checkAABBCollision(a, b) {
 function getRefinedHitbox(obj, padding, override = {}) {
   const x = (override.x !== undefined ? override.x : obj.x) + padding.left;
   const y = (override.y !== undefined ? override.y : obj.y) + padding.top;
-  const width = (override.width !== undefined ? override.width : obj.width) - padding.left - padding.right;
-  const height = (override.height !== undefined ? override.height : obj.height) - padding.top - padding.bottom;
+  const width =
+    (override.width !== undefined ? override.width : obj.width) -
+    padding.left -
+    padding.right;
+  const height =
+    (override.height !== undefined ? override.height : obj.height) -
+    padding.top -
+    padding.bottom;
   return { x, y, width, height };
 }
 
@@ -1096,7 +1282,7 @@ function getGoodDaxHitbox() {
     x: goodDax.x - padW,
     y: goodDax.y - padH,
     width: goodDax.width + padW * 2,
-    height: goodDax.height + padH * 2
+    height: goodDax.height + padH * 2,
   };
 }
 
@@ -1109,12 +1295,12 @@ function getDinoDaxHitbox() {
     x: dinoDaxPos.x - padW,
     y: dinoDaxPos.y - padH,
     width: img.width + padW * 2,
-    height: img.height + padH * 2
+    height: img.height + padH * 2,
   };
 }
 
 // Debug: allow setting score from console for testing
-window.setScoreForTesting = function(newScore) {
+window.setScoreForTesting = function (newScore) {
   score = newScore;
 };
 
@@ -1122,13 +1308,21 @@ window.setScoreForTesting = function(newScore) {
 let scoreExplosions = [];
 const SCORE_EXPLOSION_DURATION = 1.1; // seconds
 const SCORE_EXPLOSION_PARTICLES = 24;
-const SCORE_EXPLOSION_COLORS = ['#ffe600', '#ffb347', '#6ee7b7', '#60a5fa', '#f472b6', '#fff', '#fbbf24'];
+const SCORE_EXPLOSION_COLORS = [
+  "#ffe600",
+  "#ffb347",
+  "#6ee7b7",
+  "#60a5fa",
+  "#f472b6",
+  "#fff",
+  "#fbbf24",
+];
 let lastExplosionScore = 0;
 
 // --- Faster text animation state ---
 let fasterTextAnimations = [];
 const FASTER_TEXT_DURATION = 0.8; // seconds
-const FASTER_TEXT_COLORS = ['#ff0000', '#ff6b6b', '#ff9e9e'];
+const FASTER_TEXT_COLORS = ["#ff0000", "#ff6b6b", "#ff9e9e"];
 
 let currentScrollSpeed = scrollSpeedPerSecond;
 let nextSpeedupScore = 2000;
