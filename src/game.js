@@ -1,6 +1,8 @@
 import { addEntry, drawLeaderboard } from "./leaderboard.js";
 
 drawLeaderboard();
+// Hide leaderboard initially - it will show after first game over
+// document.getElementById('leaderboard').style.display = 'none';
 
 // --- Constants ---
 const BASE_GAME_WIDTH = 1205;
@@ -54,7 +56,7 @@ function playJumpSound() {
 // --- Game State Variables ---
 let lastTimestamp = performance.now();
 let score = 0;
-let gameState = "READY"; // 'READY', 'PLAYING', or 'LOSE'
+let gameState = "READY"; // 'READY', 'PLAYING', 'LOSE', or 'NAME_ENTRY'
 let isDucking = false;
 let animationTimer = 0;
 let dinoSpriteIndex = 0;
@@ -362,6 +364,7 @@ function init() {
 
   // --- READY STATE: Draw swag-run-title and animated text ---
   if (gameState === "READY") {
+    document.getElementById('leaderboard').style.display = 'block';
     // Pulse calculation
     const pulse = (Math.sin(readyPulseTimer * TITLE_PULSE_SPEED) + 1) / 2; // 0..1
     const scale = TITLE_SCALE_MIN + (TITLE_SCALE_MAX - TITLE_SCALE_MIN) * pulse;
@@ -427,6 +430,8 @@ function init() {
     ctx.fillText(instructions, marginLeft, cssHeight - marginBottom);
     ctx.restore();
     return; // Don't draw other overlays in READY
+  } else if (gameState === "PLAYING") {
+    document.getElementById('leaderboard').style.display = 'none';
   }
 
   // --- GAME OVER STATE: Auto-return to READY after 10s ---
@@ -1120,16 +1125,104 @@ function resetGame() {
   goodDaxUsed = false;
   currentScrollSpeed = scrollSpeedPerSecond;
   nextSpeedupScore = 2000;
+  
+  // Hide leaderboard when starting new game
+  hideLeaderboard();
 }
 
 async function gameOver() {
-  gameState = "LOSE";
+  gameState = "NAME_ENTRY";
+  
+  // Prevent multiple modals
+  const existingModal = document.getElementById('name-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  // Create name input modal
+  const modal = document.createElement('div');
+  modal.id = 'name-modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h2>Game Over!</h2>
+      <p>Your Score: ${Math.floor(score)}</p>
+      <div class="name-input-container">
+        <label for="player-name">Enter your name for the leaderboard:</label>
+        <input type="text" id="player-name" maxlength="20" placeholder="Your name">
+        <button id="submit-score">Submit Score</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Focus on input
+  const nameInput = document.getElementById('player-name');
+  nameInput.focus();
+  
+  // Handle form submission
+  const submitScore = async () => {
+    const playerName = nameInput.value.trim() || 'Anonymous';
+    
+    try {
+      // Add entry to leaderboard
+      await addEntry(score, playerName);
+      console.log('Score added successfully');
+      
+      // Small delay to ensure database operation completes
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Show leaderboard
+      showLeaderboard();
+      console.log('Leaderboard should now be visible');
+      
+    } catch (error) {
+      console.error('Error adding score:', error);
+      // Still show leaderboard even if there was an error
+      showLeaderboard();
+    }
+    
+    // Remove modal
+    if (document.body.contains(modal)) {
+      document.body.removeChild(modal);
+    }
+    
+    gameState = "LOSE";
+  };
+  
+  // Submit on button click
+  document.getElementById('submit-score').addEventListener('click', submitScore);
+  
+  // Submit on Enter key
+  nameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      submitScore();
+    }
+  });
+}
 
-  await addEntry(score);
+function showLeaderboard() {
+  console.log('showLeaderboard called');
+  const leaderboardContainer = document.getElementById('leaderboard');
+  console.log('Leaderboard container:', leaderboardContainer);
+  leaderboardContainer.style.display = 'block';
+  console.log('Leaderboard display set to block');
+  leaderboardContainer.scrollIntoView({ behavior: 'smooth' });
+  console.log('Leaderboard scrollIntoView called');
+}
+
+function hideLeaderboard() {
+  const leaderboardContainer = document.getElementById('leaderboard');
+  leaderboardContainer.style.display = 'none';
 }
 
 // Event listeners
 document.addEventListener("keydown", function (event) {
+  // Don't handle game controls during name entry
+  if (gameState === "NAME_ENTRY") {
+    return;
+  }
+  
   keysDown[event.code] = true;
   if (event.code === "Space" || event.code === "ArrowUp") {
     if (gameState === "READY") {

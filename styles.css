@@ -40,10 +40,234 @@ canvas {
   /* No width/height set here! */
 }
 
-#leaderboard {
-  position: relative;
+/* Name Input Modal Styles */
+#name-modal {
+  position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 33, 98, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-content h2 {
+  font-family: 'Basic Sans', sans-serif;
+  font-size: 2.5rem;
+  color: #fff;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content p {
+  font-family: 'Basic Sans', sans-serif;
+  font-size: 1.5rem;
+  color: #ffe600;
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.name-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.name-input-container label {
+  font-family: 'Basic Sans', sans-serif;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+#player-name {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-family: 'Basic Sans', sans-serif;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+#player-name:focus {
+  outline: none;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 230, 0, 0.5);
+}
+
+#submit-score {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #ffe600 0%, #ffb347 100%);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Basic Sans', sans-serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #002162;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#submit-score:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #ffed4e 0%, #ffc875 100%);
+}
+
+#submit-score:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Leaderboard Styles */
+#leaderboard {
+  position: fixed;
+  top: 50%;
+  right: 2rem;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+  padding: 2.25rem;
+  border-radius: 22.5px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  max-width: 525px;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: none;
+}
+
+#leaderboard h2 {
+  font-family: 'Basic Sans', sans-serif;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 2.7rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Basic Sans', sans-serif;
+}
+
+.leaderboard-table thead th {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 8px 6px;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: bold;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.leaderboard-table tbody tr {
+  transition: background-color 0.3s ease;
+}
+
+.leaderboard-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard-table tbody tr:hover {
+  background: rgba(255, 230, 0, 0.2);
+}
+
+.leaderboard-table td {
+  padding: 8px 6px;
+  text-align: center;
+  color: #fff;
+  font-size: 1.275rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rank-cell {
+  font-weight: bold;
+  color: #ffe600;
+  width: 15%;
+}
+
+.name-cell {
+  text-align: left;
+  width: 35%;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score-cell {
+  font-weight: bold;
+  color: #6ee7b7;
+  width: 30%;
+}
+
+.date-cell {
+  color: #ccc;
+  font-size: 0.75rem;
+  width: 20%;
+}
+
+.empty-leaderboard {
+  text-align: center !important;
+  color: #fff;
+  font-style: italic;
+  padding: 20px 10px !important;
+  font-size: 1.35rem;
+  opacity: 0.8;
+}
+
+/* Special styling for top 3 ranks */
+.leaderboard-table tbody tr:nth-child(1) .rank-cell {
+  color: #ffd700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.leaderboard-table tbody tr:nth-child(2) .rank-cell {
+  color: #c0c0c0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.leaderboard-table tbody tr:nth-child(3) .rank-cell {
+  color: #cd7f32;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollbar styling for leaderboard */
+#leaderboard::-webkit-scrollbar {
+  width: 6px;
+}
+
+#leaderboard::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+#leaderboard::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+#leaderboard::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
